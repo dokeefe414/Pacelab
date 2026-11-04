@@ -79,6 +79,13 @@ async def ask_assistant(
         response = await _llm_phrase(request.question, facts)
         if response:
             answer, engine = response, "language-model-with-verified-statistics"
-    return {"answer": answer, "engine": engine, "asOf": facts["asOf"], "evidence": {
+    recent = [record for record in records if record.date.isoformat() <= facts["asOf"]]
+    recent.sort(key=lambda w: (w.date,w.created_at), reverse=True)
+    support = [{
+        "id": w.id, "date": w.date.isoformat(), "type": w.type,
+        "distanceMiles": round(w.distance_miles,2), "durationSeconds": w.duration_seconds,
+    } for w in recent[:8]]
+    return {"answer": answer, "engine": engine, "asOf": facts["asOf"],
+            "supportingWorkouts": support, "evidence": {
         "last7": facts["last7"], "previous7": facts["previous7"], "last28": facts["last28"]
     }, "disclaimer": "Based on logged workouts only. Not medical advice or a validated training prescription."}
