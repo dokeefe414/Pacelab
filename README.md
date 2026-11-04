@@ -12,10 +12,11 @@ by **Daniel O'Keefe**, combining collegiate distance-running interests
 with full-stack APIs, wearable activity data, interactive analytics,
 test automation and responsible prediction research.
 
-> **Current status: v0.6 engineering beta.** The GitHub Pages demo is live.
-> The authenticated backend is implemented and can be run with Docker,
-> but **is not publicly hosted**. Race-time machine learning is an
-> experimental offline pipeline, **not** a publicly validated athlete model.
+> **Current status: v0.7 private-beta engineering source.** The GitHub
+> Pages demo is live. The authenticated API requires separate hosting.
+> An optional Render Blueprint is ready to review, but **no cloud resources
+> have been activated or verified live**. Race ML is exploratory rather
+> than a validated personalized forecast.
 
 ## Try it in under a minute
 
@@ -39,11 +40,12 @@ private-beta account experience requires a separately deployed HTTPS API.
 | Athlete performance center | 12-week activity calendar, workout comparisons, event-specific race progression | Yes |
 | Workout log | Add, edit, filter, export and compare manual activities | Yes, local storage |
 | Race equivalent | Riegel conversion between 800m, mile, 3K, 5K, 8K and 10K | Yes, mathematical baseline |
-| Grounded assistant | Questions answered from logged training statistics | Yes, deterministic local mode |
-| Private accounts | User-scoped workout storage with password hashing | Requires separate API |
-| COROS import | FIT/GPX/TCX or bounded ZIP, device laps, HR, cadence, power, GPS and elevation | Requires separate API |
+| Grounded assistant | Data-grounded statistics with optional per-question AI opt-in | Yes, deterministic local mode |
+| Wearable coverage | Shows recorded HR, cadence, power and elevation versus missing data | Yes |
+| Private accounts | User-scoped storage, password changes and session revocation across devices | Requires separate API |
+| COROS import | FIT/GPX/TCX or ZIP, with an explicit private-GPS-storage acknowledgement | Requires separate API |
 | Athlete privacy controls | Full JSON export and password-confirmed account deletion | Requires separate API |
-| Research ML predictor | Offline chronological evaluation and experimental server inference | Requires real data, trained artifact and API |
+| Research ML predictor | Real labeled-race readiness and optional athlete-disjoint evaluation | Requires genuine data, trusted model and API |
 | HTTPS production reference | FastAPI, Postgres, Nginx, Caddy, Docker and backups | Requires operator-owned server |
 
 ### Performance and wearable insights
@@ -95,6 +97,15 @@ GPS traces in the sample-data demo.
 | Infrastructure | Docker Compose, Nginx, Caddy HTTPS reverse proxy |
 | QA | Node tests, pytest, Playwright Chromium E2E and GitHub Actions |
 
+## Optional cloud-hosted private backend
+
+The repository includes an [opt-in Render Blueprint](render.yaml) and
+[step-by-step managed PostgreSQL deployment guide](docs/render-deployment.md).
+**Adding these files does not create a server or start billing.** A Render
+account owner must connect the service, review ongoing costs, approve
+deployment, provision private users and verify security before collecting
+running data. Public account signup stays disabled by default.
+
 ## Run the full application locally
 
 The public **[browser demo](https://dokeefe414.github.io/Pacelab/)**
@@ -137,6 +148,21 @@ and tested against synthetic binary FIT inputs. The original private
 activity files and routes are **not included** in the repository.
 See [tests](docs/testing.md) and
 [architecture](docs/architecture.md) for parser guarantees and caveats.
+
+## Data readiness and consent
+
+The authenticated Race predictor can check how many genuine labeled
+pre-race rows and distinct race dates are available, before an experimental
+model is trained. A minimum of **60 rows and 12 dates** is only a research
+preflight, not evidence of useful race predictions.
+
+Optional multi-athlete experiments accept a **pseudonymous** athlete_id
+column for athlete-disjoint validation; no athlete identities or routes
+appear in the metrics. [Read the research data guide](docs/race-data-governance.md).
+
+The private COROS importer requires explicit GPS-storage acknowledgment.
+Even when an external AI provider is configured, sending a question and
+aggregate stats requires **opt-in on that individual question**.
 
 ## AI and model evaluation: what is real
 
@@ -200,6 +226,7 @@ Start with the [documentation index](docs/README.md).
 | [Engineering decisions](docs/decisions.md) | Design choices and honest tradeoffs |
 | [Portfolio case study](docs/case-study.md) | Problem, architecture and interview walkthrough |
 | [Self-hosted deployment](deploy/README.md) | HTTPS, operator setup, diagnostics, backups and rollback |
+| [Optional Render hosting](docs/render-deployment.md) | Cloud Blueprint, costs, private account provisioning, verification |
 | [Privacy & operations](docs/privacy-and-operations.md) | Protecting athlete data, deletion and backups |
 | [Security policy](SECURITY.md) | Responsible reporting and public-release prerequisites |
 | [Contributing](CONTRIBUTING.md) | Developer setup and pull-request expectations |

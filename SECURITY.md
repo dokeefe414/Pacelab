@@ -18,8 +18,10 @@ another athlete's data or account without explicit authorization.
 - FIT/GPX/TCX/ZIP uploads can include home locations, heart rate and timestamps.
 - Original file bytes are parsed in memory and discarded. A bounded sample of
   coordinates and derived workout data **is retained** in the private account.
-- JWT access tokens are browser session-scoped and short-lived but do not yet
-  support comprehensive server-side revocation or refresh.
+- JWT access tokens are browser session-scoped and short-lived. Token
+  generation checks now support cross-device revocation on password change
+  and sign-out. Per-device revocation, refresh and hardened cookie sessions
+  are not implemented.
 - Rate limits are process-local, not a distributed defense against abuse.
 - The optional external language model is disabled by default. When enabled,
   a user question and aggregate stats leave PaceLab. Consent is needed.
@@ -40,3 +42,14 @@ another athlete's data or account without explicit authorization.
 - [ ] Real-user and mobile/browser regression testing
 
 See [production runbook](deploy/README.md) and [privacy guidance](docs/privacy-and-operations.md).
+
+
+## New v0.7 controls
+
+- Auth tokens are bound to the issuing API URL in the browser.
+- Server sign-out/password rotation invalidate all older tokens.
+- External AI phrasing requires explicit per-question opt-in.
+- GPS-bearing file imports require a positive privacy acknowledgment
+  before any file request is transmitted.
+- An opt-in Render hosting Blueprint exists as code. It is not a live
+  server, a billing authorization or a completed security audit.

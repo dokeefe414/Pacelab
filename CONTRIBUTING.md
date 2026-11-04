@@ -25,6 +25,19 @@ alembic upgrade head
 
 See [testing guide](docs/testing.md) for mocked API flows and CI troubleshooting.
 
+## v0.7 security and research standards
+
+Any change to authentication must preserve token revocation, API-origin
+binding and account isolation. COROS import changes require privacy
+acknowledgment and synthetic regression fixtures.
+
+External AI integrations must remain opt-in per question; never assume
+a server API key is consent. Multi-athlete research data needs documented
+participant permission and pseudonyms, with no real records committed.
+
+The optional Render Blueprint is infrastructure code only, and cloud
+hosting changes must disclose cost/secret/backup implications.
+
 ## Pull request standards
 
 1. Explain the user problem, technical design, limitations, and rollback plan.

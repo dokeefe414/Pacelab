@@ -2,7 +2,7 @@ import {initTour} from './tour.js';
 import {initPerformance,renderPerformance} from './performance.js';
 import {KEY,parseTime,formatTime,predictRace,validateWorkout,paceSeconds,lastWeeks,summarize,toCSV,parseCSV,sampleWorkouts} from './core.js';
 import {initIntelligence,renderIntelligence} from './intelligence.js';
-import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction,downloadAccountData,permanentlyDeleteAccount} from './api.js';
+import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction,downloadAccountData,permanentlyDeleteAccount,signOutEverywhere,changeAccountPassword} from './api.js';
 const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
 let workouts=[];let usingSample=false;let currentView='dashboard';
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -50,8 +50,34 @@ $('#download-account').addEventListener('click',async ()=>{
   try{await downloadAccountData();toast('Private account export downloaded. Store it securely.');}
   catch(err){toast('Export failed: '+err.message);}
 });
-$('#signout-account').addEventListener('click',()=>{
-  logout();$('#account-settings-dialog').close();load();render();toast('Signed out of account.');
+$('#signout-account').addEventListener('click',async ()=>{
+  const button=$('#signout-account');button.disabled=true;
+  let revoked=true;
+  try{await signOutEverywhere();}
+  catch(err){revoked=false;logout();}
+  finally{
+    button.disabled=false;
+    $('#account-settings-dialog').close();load();render();
+    toast(revoked?'Signed out across all devices.':
+      'Signed out in this browser; server revocation could not be verified. Other tokens expire within 60 minutes.');
+  }
+});
+$('#change-password-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const button=$('#change-password-submit');
+  const result=$('#change-password-result');
+  const oldPassword=$('#change-current-password').value;
+  const newPassword=$('#change-new-password').value;
+  result.textContent='';
+  button.disabled=true;
+  try{
+    if(newPassword.length<12)throw Error('New password must contain at least 12 characters.');
+    await changeAccountPassword(oldPassword,newPassword);
+    $('#change-password-form').reset();
+    $('#account-settings-dialog').close();
+    load();render();
+    toast('Password changed. All devices have been signed out. Sign in again.');
+  }catch(err){result.textContent=err.message;}finally{button.disabled=false;}
 });
 $('#delete-account-form').addEventListener('submit',async event=>{
   event.preventDefault();

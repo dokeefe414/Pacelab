@@ -122,3 +122,62 @@ users or measured prediction improvements unless independently supported.
 
 See [system design](architecture.md), [ML methodology](ml-methodology.md),
 [API reference](api.md) and [deployment runbook](../deploy/README.md).
+
+
+## v0.7: Turning a prototype into an accountable private beta
+
+The latest development stage focused on the reliability and security
+required before a live API can responsibly accept private workouts.
+
+### Session revocation
+
+Original JWTs expired after 60 minutes but could not be canceled
+server-side. I introduced a user-level token-generation value that is
+checked against each signed request. Signing out or rotating a password
+increments the value and invalidates older tokens across devices.
+This is a meaningful improvement, but the browser still uses
+sessionStorage rather than HttpOnly cookie sessions.
+
+### Privacy-aware COROS ingestion
+
+Before receiving location-bearing workout files, the interface now
+describes GPS storage and requires an affirmative acknowledgment. This
+protects against accidental uploads; the backend continues to discard
+original source bytes and retain bounded private derived data.
+
+### Grounded AI with explicit consent
+
+Optional external AI wording requires a positive opt-in for the individual
+question, regardless of whether the operator has enabled an API key.
+Deterministic statistical answers remain available without sending
+any data to the provider. This separates truthful local data analysis
+from the extra privacy consequences of a third-party AI service.
+
+### Research validity
+
+The account can check whether it has enough eligible real race labels
+to begin an experiment. Research CSVs may optionally include
+pseudonymous athlete IDs to evaluate models on unseen athletes;
+this group-disjoint check complements, rather than replaces,
+time-ordered evaluation. No athlete-disjoint or temporal score in
+synthetic CI fixtures is marketed as real-world forecasting performance.
+
+### Hosting as configuration, not a false success claim
+
+The repository includes an optional Render Blueprint for an API
+and managed database. No paid resources are created or billed until
+the operator explicitly connects the service and approves its resources.
+The public Pages demo remains live and separate. This distinction makes
+the portfolio more credible than presenting screenshots of a
+backend that nobody can reach.
+
+## Technical interview discussion prompts
+
+- Why does a JWT signature alone not allow immediate logout?
+- What is the difference between revoking *all* sessions and
+  revoking one device?
+- Why must an access token be tied to its issuing API origin?
+- What risks do GPS samples preserve after raw file deletion?
+- Why is AI consent enforced on the server, not only with a checkbox?
+- Why is an athlete-disjoint split not the same as a chronological split?
+- How does a configuration file differ from a verified running deployment?

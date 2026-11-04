@@ -11,10 +11,12 @@ private beta. **The GitHub Pages preview does not host personal accounts.**
 | [API reference](api.md) | Authentication, workout/import and analysis endpoints |
 | [Testing](testing.md) | Unit, integration, browser and synthetic FIT tests |
 | [ML methodology](ml-methodology.md) | Dataset provenance, leakage, models, metrics and pitfalls |
+| [Research data governance](race-data-governance.md) | Consent, pseudonyms, readiness thresholds and reporting |
 | [Portfolio case study](case-study.md) | Design motivation, skills demonstrated and tradeoffs |
 | [Engineering decisions](decisions.md) | Rationale and alternatives for major choices |
 | [Demo publishing](public-demo.md) | GitHub Pages static-only behavior |
 | [HTTPS operations](../deploy/README.md) | Self-hosting setup, troubleshooting and rollback |
+| [Optional Render hosting](render-deployment.md) | Blueprint resources, managed Postgres, operator deployment and costs |
 | [Privacy/backup](privacy-and-operations.md) | Sensitive running data, deletion and backups |
 | [Security policy](../SECURITY.md) | Responsible disclosure and public release gates |
 | [Contributing](../CONTRIBUTING.md) | Development and review standards |

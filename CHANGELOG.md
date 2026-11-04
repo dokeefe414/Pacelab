@@ -3,6 +3,20 @@
 Versions describe repository capabilities, **not** public production
 deployment or race-model validation. See README for the current limits.
 
+## v0.7 — private-beta account security and research integrity (2026-11)
+
+- Added database-backed revocation of all access tokens on server sign-out
+  and password change, with dedicated account-security UI and tests.
+- Bound tokens to one API base; changing the server address clears the token.
+- Required per-question consent for an optional external language model.
+- Added a privacy acknowledgment before GPS-bearing COROS uploads.
+- Added genuine-race dataset readiness checks, optional pseudonymous
+  athlete-disjoint evaluation, and wearable sensor-coverage summaries.
+- Added a review-only Render Blueprint for a Docker API and managed database,
+  plus a cloud deployment runbook and static configuration tests.
+- Expanded engineering docs, CI and privacy/security tests.
+- **A live cloud API and a validated real-data model are not claimed.**
+
 ## v0.6 — athlete performance center and product readiness (2026-11)
 
 - Fixed hidden DOM target in signed-in Playwright workout-details test.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {trainingCalendar,raceProgression,workoutComparison} from '../src/performance.js';
+import {trainingCalendar,raceProgression,workoutComparison,sensorCoverage} from '../src/performance.js';
 
 const date=(s)=>new Date(s+'T12:00:00');
 
@@ -43,4 +43,23 @@ test('comparison normalizes pace across different distances',()=>{
   assert.equal(r.averageHeartRateDelta,7);
   assert.equal(workoutComparison(items,'a','a'),null);
   assert.equal(workoutComparison(items,'a','missing'),null);
+});
+
+
+test('sensor coverage never treats unrecorded fields as measured zero',()=>{
+  const data=[
+    {date:'2026-11-01',avgHeartRate:145,avgCadenceSpm:165},
+    {date:'2026-11-02',avgHeartRate:null,avgPowerWatts:null},
+    {date:'2026-11-03',avgHeartRate:150,avgPowerWatts:240},
+    {date:'2026-11-10',avgHeartRate:170},
+  ];
+  const report=sensorCoverage(data,date('2026-11-04'));
+  assert.equal(report.total,3);
+  const heart=report.rows.find(x=>x.label==='Average heart rate');
+  assert.equal(heart.available,2);
+  assert.equal(heart.missing,1);
+  assert.equal(heart.percent,66.7);
+  const power=report.rows.find(x=>x.label==='Running power');
+  assert.equal(power.available,1);
+  assert.equal(sensorCoverage([],date('2026-11-04')).rows[0].percent,0);
 });

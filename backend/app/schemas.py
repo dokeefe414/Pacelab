@@ -67,6 +67,7 @@ class WorkoutDetailResponse(WorkoutResponse):
 
 class AssistantRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
+    allowExternalProcessing: bool = False
 
 
 class EventRequest(BaseModel):
@@ -86,3 +87,9 @@ class RaceFeatures(BaseModel):
     averageEasyPaceSecondsPerMile: float = Field(ge=180, le=1800, allow_inf_nan=False)
     hardSessions4w: float = Field(ge=0, le=28, allow_inf_nan=False)
     longestRunMiles: float = Field(ge=0, le=100, allow_inf_nan=False)
+
+
+
+class PasswordChangeRequest(BaseModel):
+    currentPassword: str = Field(min_length=1, max_length=128)
+    newPassword: str = Field(min_length=12, max_length=128)

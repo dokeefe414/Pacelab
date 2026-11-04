@@ -99,3 +99,43 @@ HTTPS full-stack service has actually been deployed.
 - That location, retention and consent policies have been independently audited
 
 Be explicit about these remaining limits in the README and portfolio case study.
+
+
+## v0.7 regressions
+
+**Server-side account session rotation:** Python tests cover valid login,
+sign-out from all devices, rejection of stale JWTs, password changes and
+reauthentication. Token versions are stored in SQLite in tests and
+PostgreSQL in the production reference.
+
+**Browser security:** Playwright tests verify changing an account password,
+signing out, and binding a token to the API address that issued it.
+Tests use fictitious account data and network mocks.
+
+**COROS disclosure:** Playwright verifies that the location-data
+acknowledgment dialog appears before upload, cancellation makes **zero**
+API calls, and a positive acknowledgment proceeds with the mocked file.
+All FIT/GPX bytes in CI are synthetic.
+
+**External AI opt-in:** Python tests mock the provider and assert it is
+not called when the opt-in property is absent or false; tests confirm an
+explicit positive opt-in is needed, without real provider requests.
+
+**Research integrity:** Backend tests verify account-scoped race readiness,
+data insufficiency messages, optional athlete-disjoint evaluation and that
+pseudonymous IDs are omitted from aggregate reports.
+
+**Infrastructure sanity:** A static YAML test inspects render.yaml for
+a generated signing secret, private-by-default registration, a managed
+database reference, narrow Pages CORS and an actual readiness endpoint.
+This test does not prove live Render deployment, billing configuration,
+backup safety or provider runtime compatibility.
+
+### Verification before invitations
+
+After *actual* cloud deployment, test the real assigned API URL, database
+migrations, token revocation, original-device import accuracy, data export,
+account deletion and HTTPS/CORS from a real browser. Check private backup
+retention separately. CI alone is not a production security audit.
+
+See [optional Render deployment](render-deployment.md).

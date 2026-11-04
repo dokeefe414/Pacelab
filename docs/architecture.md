@@ -1,4 +1,4 @@
-# PaceLab architecture and data flow — v0.6
+# PaceLab architecture and data flow — v0.7
 
 ## System boundary
 
@@ -133,3 +133,32 @@ Self-hosted private beta:
 ```
 
 The API and database are **not publicly available** on the GitHub Pages demo.
+
+
+## v0.7 security and cloud boundaries
+
+**Account token generation:** User rows store a numeric `token_version`.
+JWTs include the issuing generation and the API checks it against
+PostgreSQL on each protected request. Password changes and server sign-out
+increment the generation, invalidating all old tokens **across devices**.
+This does not yet provide per-device token management, refresh tokens,
+verified recovery or HttpOnly cookie storage.
+
+**Browser API audience:** The browser records which API base issued the
+session token. Changing the base clears the token rather than forwarding
+the previous host's credential elsewhere. Legacy unbound tokens are
+intentionally signed out during upgrade.
+
+**Consent points:** An import confirmation is required before uploading
+a file that may contain GPS data. Optional LLM processing must be approved
+for each question; server provider credentials alone do not authorize data
+transmission.
+
+**Managed-cloud option:** The [Render Blueprint](../render.yaml) defines
+an opt-in Docker API and managed Postgres service with generated signing
+secret, narrow CORS and public registration disabled. Applying it requires
+the owner's explicit action, billing review and subsequent verification.
+No live API is implied by the YAML file.
+
+See [Render deployment](render-deployment.md) and the
+[security release checklist](../SECURITY.md).

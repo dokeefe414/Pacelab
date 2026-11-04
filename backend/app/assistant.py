@@ -106,12 +106,16 @@ async def ask_assistant(
     facts = summarize_training(records)
     answer = grounded_answer(request.question, facts)
     engine = "verified-statistics"
-    if os.getenv("PACELAB_ASSISTANT_PROVIDER", "").lower() == "openai":
+    # Explicit per-question consent; server-side configuration alone is not
+    # permission to disclose an athlete's question/aggregate metrics.
+    if (request.allowExternalProcessing
+        and os.getenv("PACELAB_ASSISTANT_PROVIDER", "").lower() == "openai"):
         response = await _llm_phrase(request.question, facts)
         if response:
             answer, engine = response, "language-model-with-verified-statistics"
     support = supporting_workouts(request.question, records, facts)
     return {"answer": answer, "engine": engine, "asOf": facts["asOf"],
+            "externalProcessingUsed": engine == "language-model-with-verified-statistics",
             "evidenceNote": "A selection of relevant recent records, not all workouts used in the aggregates.",
             "supportingWorkouts": support, "evidence": {
         "last7": facts["last7"], "previous7": facts["previous7"], "last28": facts["last28"]

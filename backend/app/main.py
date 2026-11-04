@@ -3,7 +3,7 @@ import os
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, text as sql_text
+from sqlalchemy import select, update, text as sql_text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -24,7 +24,7 @@ from .prediction import router as prediction_router
 from .schemas import AuthResponse, LoginRequest, PublicUser, RegisterRequest, WorkoutPayload, WorkoutResponse, WorkoutDetailResponse
 from .security import create_access_token, password_hash, verify_password
 
-app = FastAPI(title="PaceLab API", version="0.6.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="PaceLab API", version="0.7.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 origins = [x.strip() for x in os.getenv("PACELAB_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 app.middleware("http")(security_middleware)
@@ -49,7 +49,9 @@ def health():
 def readiness(db: Session = Depends(get_db)):
     """Use actual DB query to ensure migrations and connectivity are healthy."""
     try:
-        db.execute(sql_text("SELECT 1"))
+        # A live connection without migrated tables is NOT readiness.
+        db.execute(sql_text("SELECT 1 FROM users LIMIT 1"))
+        db.execute(sql_text("SELECT 1 FROM workouts LIMIT 1"))
     except SQLAlchemyError as exc:
         raise HTTPException(status_code=503, detail="Database unavailable") from exc
     return {"status": "ready", "database": "ok"}
@@ -67,7 +69,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(409, "Email is already registered") from exc
     db.refresh(user)
-    return AuthResponse(access_token=create_access_token(user.id), user=PublicUser(id=user.id, email=user.email))
+    return AuthResponse(access_token=create_access_token(user.id, user.token_version), user=PublicUser(id=user.id, email=user.email))
 
 
 @app.post("/api/auth/login", response_model=AuthResponse)
@@ -75,7 +77,15 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.email == str(data.email)))
     if user is None or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    return AuthResponse(access_token=create_access_token(user.id), user=PublicUser(id=user.id, email=user.email))
+    return AuthResponse(access_token=create_access_token(user.id, user.token_version), user=PublicUser(id=user.id, email=user.email))
+
+
+@app.post("/api/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_all_tokens(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Revokes every token issued before this sign-out, across all devices."""
+    db.execute(update(User).where(User.id == user.id).values(token_version=User.token_version + 1))
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/api/auth/me", response_model=PublicUser)

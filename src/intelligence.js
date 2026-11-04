@@ -1,7 +1,7 @@
-/** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
+/** PaceLab v0.7 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
-import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
+import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV,fetchRaceDataReadiness} from './api.js';
 
 const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,6 +12,7 @@ export function initIntelligence(options){
   $('#close-activity').addEventListener('click',()=>$('#activity-dialog').close());
   $('#load-race-baseline').addEventListener('click',loadRaceBaseline);
   $('#fill-ml-features').addEventListener('click',fillTrainingFeatures);
+  $('#check-race-readiness').addEventListener('click',checkRaceDataReadiness);
   $('#download-race-data').addEventListener('click',async ()=>{
     const output=$('#training-feature-status');
     try{
@@ -20,6 +21,11 @@ export function initIntelligence(options){
     }catch(err){output.textContent=err.message;}
   });
   $('#assistant-form').addEventListener('submit',askTrainingAssistant);
+  $('#activity-import-ack').addEventListener('change',()=>{
+    $('#activity-import-accept').disabled=!$('#activity-import-ack').checked;
+  });
+  $('#activity-import-accept').addEventListener('click',()=>$('#activity-import-consent').close('approve'));
+  $('#activity-import-cancel').addEventListener('click',()=>$('#activity-import-consent').close('cancel'));
   $('#compare-form').addEventListener('submit',compareTrainingPeriods);
   document.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',()=>{
     $('#assistant-question').value=b.dataset.ask;
@@ -154,12 +160,36 @@ async function openWorkout(id){
     }
   }catch(err){target.textContent='Could not fetch workout: '+err.message;}
 }
+function requestActivityImportConsent(files){
+  const dialog=$('#activity-import-consent');
+  const checkbox=$('#activity-import-ack');
+  const confirm=$('#activity-import-accept');
+  const total=files.reduce((sum,file)=>sum+file.size,0);
+  $('#activity-import-file-summary').textContent=
+    files.length+' selected file(s), '+(total/1024/1024).toFixed(2)+' MiB total: '+
+    files.slice(0,4).map(file=>file.name).join(', ')+
+    (files.length>4?' and '+(files.length-4)+' more':'');
+  checkbox.checked=false;
+  confirm.disabled=true;
+  dialog.returnValue='';
+  return new Promise(resolve=>{
+    dialog.addEventListener('close',()=>resolve(dialog.returnValue==='approve'),{once:true});
+    dialog.showModal();
+  });
+}
+
 async function handleFiles(event){
   const input=event.target;
   const chosen=[...input.files].slice(0,50);
   if(!chosen.length)return;
   if(!apiIsConnected()){context.toast('Sign in to import activity files.');input.value='';return;}
   const status=$('#fit-import-status');let added=0,duplicates=0,failed=[];
+  const approved=await requestActivityImportConsent(chosen);
+  if(!approved){
+    input.value='';
+    status.textContent='Import cancelled. Nothing was uploaded.';
+    return;
+  }
   status.textContent='Importing '+chosen.length+' files…';
   for(let i=0;i<chosen.length;i++){
     const file=chosen[i];
@@ -220,7 +250,7 @@ async function askTrainingAssistant(event){
   }
   button.disabled=true;answer.textContent='Checking your actual training statistics…';
   try{
-    const result=await askAssistant(input.value.trim());
+    const result=await askAssistant(input.value.trim(),$('#assistant-external-consent').checked);
     answer.textContent=result.answer;
     $('#assistant-supporting-workouts').innerHTML=(result.supportingWorkouts||[]).length?
       '<h3>Selected relevant workouts</h3><p class="body-copy">'+escapeHTML(result.evidenceNote||'Representative records behind your statistics.')+'</p>'+result.supportingWorkouts.map(w=>
@@ -228,7 +258,10 @@ async function askTrainingAssistant(event){
         '<span>'+escapeHTML(w.date)+' · '+escapeHTML(w.type)+'</span><strong>'+
         Number(w.distanceMiles).toFixed(2)+' mi</strong></button>').join(''):
       '<p class="body-copy">No logged workouts available as supporting evidence.</p>';
-    $('#assistant-footnote').textContent='Engine: '+result.engine+' · As of '+result.asOf+' · '+result.disclaimer;
+    $('#assistant-footnote').textContent='Engine: '+result.engine+' · As of '+result.asOf+
+      (result.externalProcessingUsed?' · External AI processing explicitly authorized for this question.':' · No external AI processing used.')+
+      ' · '+result.disclaimer;
+    $('#assistant-external-consent').checked=false;
   }catch(err){answer.textContent='Unable to analyze workouts: '+err.message;}finally{button.disabled=false;}
 }
 
@@ -251,4 +284,29 @@ function compareTrainingPeriods(event){
       '<p class="body-copy"><strong>'+Math.abs(delta).toFixed(1)+' miles '+(delta>=0?'more':'fewer')+
       '</strong> in the second selected period. Select equal-length windows for fair volume comparisons. Pace is across mixed workouts and terrain.</p>';
   }catch(err){output.textContent=err.message;}
+}
+
+
+async function checkRaceDataReadiness(){
+  const output=$('#race-readiness-status');
+  if(!apiIsConnected()){
+    output.textContent='Sign into your private account to check your recorded race training history.';
+    return;
+  }
+  output.textContent='Checking real labeled race history…';
+  try{
+    const info=await fetchRaceDataReadiness();
+    const count=info.eligibleLabeledRows;
+    const byEvent=Object.entries(info.eligibleByEventMeters||{}).map(
+      ([distance,n])=>distance+'m: '+n).join(', ')||'none';
+    output.textContent=count+' of '+info.minimumRowsForExperiment+
+      ' eligible labeled race rows across '+info.distinctEligibleRaceDates+
+      ' distinct dates (minimum '+info.minimumDistinctDates+'). '+
+      info.additionalRowsNeeded+' additional eligible races needed to reach the row threshold. '+
+      'Eligible events: '+byEvent+'. '+
+      (info.canStartExperimentalTraining?
+        'Enough rows for an experiment; this is NOT a validation of forecast accuracy. ':
+        'Model training should not begin with this history alone. ')+
+      info.warning;
+  }catch(err){output.textContent='Unable to assess race history: '+err.message;}
 }

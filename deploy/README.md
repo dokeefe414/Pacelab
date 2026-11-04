@@ -4,6 +4,14 @@
 > The public GitHub Pages link is a static preview; it cannot run FastAPI or
 > PostgreSQL. This guide is for operating a **separate private-beta host**.
 
+## Optional managed hosting
+
+For an API deployed alongside managed PostgreSQL, review the
+[opt-in Render Blueprint guide](../docs/render-deployment.md) and
+[render.yaml](../render.yaml). The owner must connect a provider account,
+approve any ongoing charges and verify that deployment succeeded.
+GitHub source changes alone do not create a backend.
+
 ## Required resources
 
 - A Linux server or VM with Docker Engine and Compose v2
