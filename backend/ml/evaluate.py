@@ -16,8 +16,9 @@ from math import ceil, sqrt
 from statistics import mean, median
 
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
 from sklearn.linear_model import Ridge
+from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -45,6 +46,11 @@ def model_candidates():
         "median_baseline": DummyRegressor(strategy="median"),
         "ridge": make_pipeline(StandardScaler(),Ridge(alpha=20.0)),
         "random_forest": RandomForestRegressor(n_estimators=140,min_samples_leaf=3,random_state=42,n_jobs=1),
+        "hist_gradient_boosting": HistGradientBoostingRegressor(max_iter=90,max_leaf_nodes=7,
+            min_samples_leaf=5,l2_regularization=12.0,learning_rate=.045,random_state=42),
+        "small_neural_net": make_pipeline(StandardScaler(),
+            MLPRegressor(hidden_layer_sizes=(16,),activation="relu",solver="lbfgs",
+                         alpha=12.0,max_iter=250,random_state=42)),
     }
 
 

@@ -24,6 +24,8 @@ def test_rolling_folds_and_riegel_use_previous_date_only():
     assert len(output["folds"])==4
     assert "ridge" in output["models"]
     assert "random_forest" in output["models"]
+    assert "hist_gradient_boosting" in output["models"]
+    assert "small_neural_net" in output["models"]
     assert "median_baseline" in output["models"]
     assert "riegel_last_known_race" in output["models"]
     assert all(f["train_end"]<f["test_start"] for f in output["folds"])
