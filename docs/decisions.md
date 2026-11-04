@@ -91,3 +91,55 @@ application bug. Tests must match how a person operates the interface.
 - A suitable and sufficiently large real race dataset
 - Hosting cost, security ownership and backup recovery objectives
 - Large-scale plotting/performance for thousands of workouts
+
+
+## ADR-009 — Token generations instead of unverifiable browser logout
+
+**Decision:** Store an integer token generation on each user and embed it
+in JWTs. Every private endpoint checks the generation against the
+database. Sign-out and password change increment it.
+
+**Why:** Clearing sessionStorage alone cannot revoke a stolen or
+duplicated token. The generation approach is simple, reliable across
+server instances and needs no unbounded list of individual token IDs.
+
+**Tradeoff:** It revokes *all* devices, not a selected one, and still relies
+on short-lived browser bearer tokens. Cookie sessions, verification,
+password recovery and granular revocation remain future security work.
+
+## ADR-010 — Explicit permission before COROS and external AI data transfer
+
+**Decision:** Require a visible acknowledgment before uploading activity
+files and a fresh per-question opt-in for external AI wording.
+
+**Why:** GPS tracks reveal sensitive location patterns, and an external
+model provider introduces a new data-handling boundary.
+
+**Tradeoff:** Users perform an extra interaction; consent cannot replace
+encryption, access control, retention or transparent provider policies.
+
+## ADR-011 — Do not claim a model is usable merely because training runs
+
+**Decision:** Expose the count of genuine eligible labeled race examples,
+separately measure athlete-disjoint scores if pseudonymous IDs are
+provided with consent, and retain the chronological holdout.
+
+**Why:** A trained estimator with insufficient/biased race data can appear
+impressive while predicting poorly. Data provenance and generalization
+matter more than a neural network's complexity.
+
+**Tradeoff:** Research may honestly report insufficient data for some
+time. Group-disjoint folds do not model future time shifts.
+
+## ADR-012 — Cloud resources are activated only by their owner
+
+**Decision:** Commit an optional Render Blueprint that describes a
+Docker API and managed PostgreSQL, but require owner approval of service
+creation and billing before calling it a hosted backend.
+
+**Why:** Cloud services can incur recurring charges and must be
+configured with private secrets and consent controls. Source code is
+not proof of a healthy live deployment.
+
+**Tradeoff:** Public accounts cannot be advertised until a real hosting
+connection, deployment and security review exist.

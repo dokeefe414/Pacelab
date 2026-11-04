@@ -1,4 +1,4 @@
-/** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
+/** PaceLab v0.7 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
 import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV,fetchRaceDataReadiness} from './api.js';
