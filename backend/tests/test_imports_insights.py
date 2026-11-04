@@ -3,7 +3,14 @@ from datetime import date, datetime, timedelta, timezone
 import io
 
 from app.activity_import import parse_activity, ActivityParseError
-from .test_api import register, payload
+def register(client, email):
+    response = client.post("/api/auth/register", json={"email": email, "password": "very-strong-password-123"})
+    assert response.status_code == 201, response.text
+    return {"Authorization": "Bearer " + response.json()["access_token"]}
+
+
+def payload(distance=5):
+    return {"date": "2026-11-03", "type": "Easy", "distanceMiles": distance, "durationSeconds": 2400, "notes": "Good aerobic run"}
 
 
 def fixture_gpx():
