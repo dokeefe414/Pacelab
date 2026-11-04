@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advancedStats,linePath,routePath,localTrainingAnswer} from '../src/intelligence-core.js';
+import {advancedStats,linePath,routePath,paceTrace,compareDateWindows,localTrainingAnswer} from '../src/intelligence-core.js';
 
 test('last 7 days exclude older runs and calculate weighted load',()=>{
   const data=[
@@ -39,4 +39,28 @@ test('browser-only assistant uses recorded stats',()=>{
   const stats=advancedStats([{date:'2026-11-04',distanceMiles:5,durationSeconds:2400,type:'Easy'}],new Date(2026,10,4));
   assert.match(localTrainingAnswer('How many miles this week?',stats),/5.0 miles/);
   assert.match(localTrainingAnswer('Do I have heart rate data?',stats),/No recent heart-rate/);
+});
+
+
+test('pace trace filters pauses, GPS spikes and nonmoving points',()=>{
+  const track=[
+    {elapsed:0,distanceMiles:0},
+    {elapsed:60,distanceMiles:0.125},
+    {elapsed:120,distanceMiles:0.125},
+    {elapsed:125,distanceMiles:0.5},
+    {elapsed:180,distanceMiles:0.625}
+  ];
+  const trace=paceTrace(track);
+  assert.equal(trace.length,2);
+  assert.ok(trace.every(p=>p.paceSeconds>=180&&p.paceSeconds<=1800));
+});
+test('selected period comparisons do not mix workout windows',()=>{
+  const data=[
+    {date:'2026-10-01',distanceMiles:4,durationSeconds:2000,type:'Easy'},
+    {date:'2026-10-08',distanceMiles:6,durationSeconds:2800,type:'Tempo'}
+  ];
+  const r=compareDateWindows(data,'2026-10-01','2026-10-07','2026-10-08','2026-10-14');
+  assert.equal(r.first.miles,4);
+  assert.equal(r.second.miles,6);
+  assert.equal(r.second.hardSessions,1);
 });
