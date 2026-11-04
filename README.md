@@ -4,7 +4,7 @@
 
 **No downloads or installation needed.** Explore the interactive running dashboard, sample workouts, training analytics, race-equivalence calculator, and local training assistant.
 
-> **Demo publishing status:** GitHub Pages deployment has not yet been confirmed successful. If the link isn't working, see the [deployment workflow](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml). The repository owner may need to enable **Settings → Pages → Source: GitHub Actions**. This is a sample-data demo; private COROS imports and accounts need a separately hosted backend.
+> **Publishing required:** If the link shows 404, go to [Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages) and set **Source: Deploy from a branch**, **Branch: main**, **Folder: /(root)**, then click **Save**. This bypasses the custom GitHub Actions workflow. The demo uses sample data; private COROS imports and accounts require a separately hosted backend.
 
 **A full-stack running analytics and experimental race-prediction platform.**
 
@@ -120,37 +120,25 @@ before turning that on for other people.
 
 ## One-click browser access — no downloads
 
-**PaceLab can run as a static demo through GitHub Pages.** Once the
-repository's Pages setting is enabled, visitors open the public demo in
-their browser without installing Python, Docker, or any software.
+The **sample-data browser demo** is designed to run directly from this
+repository's static files (`index.html`, `styles.css`, and `src/`).
+It does not require Node, Vite or an API server to **view** it.
 
-**Publishing status:** The Pages URL is not verified as live yet. The
-expected URL after successful activation is
-`https://dokeefe414.github.io/Pacelab/`.
+**One-time publishing step:**
 
-One-time owner action: open
-[Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages),
-select **GitHub Actions** as the build source, and save. Then go to
-[Actions → Deploy static demo](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml)
-and choose **Run workflow**. After the first successful publication, new
-commits to `main` that change the frontend automatically redeploy it.
+1. Open [Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages).
+2. Under **Build and deployment**, set **Source = Deploy from a branch**.
+3. Choose **Branch = main** and **Folder = /(root)**, then **Save**.
+4. Visit `https://dokeefe414.github.io/Pacelab/` once GitHub publishes.
 
-This **free browser-only demo** includes sample workouts, local workout logs,
-training charts, deterministic Q&A, and formula race estimates. The demo
-does **not** provide private server accounts, COROS FIT uploads, or a trained
-ML inference API. Those require a separately hosted full-stack service.
+This direct source deployment avoids dependency on the custom queued Pages
+workflow. The `.nojekyll` file ensures GitHub serves the raw static assets.
+See [browser demo setup](docs/public-demo.md) for troubleshooting.
 
-## Public browser demo
-
-A **frontend-only GitHub Pages deployment workflow** is included at
-[Actions → Deploy static demo to GitHub Pages](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml).
-
-To activate a live link, open the repository's Settings → Pages, select
-**GitHub Actions** as the source, and manually run that workflow. Its
-successful run provides the actual URL. Do not assume a site is published
-until the run succeeds. The static demo is functional with local synthetic
-data and a local deterministic assistant; authenticated imports require an
-independently deployed API and database.
+**What works without a backend:** Synthetic sample workouts, local logging,
+training charts, deterministic training Q&A and formula-based race estimates.
+**What needs a hosted API:** Accounts, COROS FIT/GPX/TCX/ZIP imports and
+experimental trained-model inference.
 
 ## Quality checks
 

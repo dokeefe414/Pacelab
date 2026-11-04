@@ -1,45 +1,46 @@
-# Publish PaceLab as a click-to-open browser demo
+# Make PaceLab a working browser link
 
-The static PaceLab frontend is already built with Vite and can be served
-for free using GitHub Pages. No software installation is necessary to open
-the published demo.
+## Recommended: publish directly from main (no build workflow)
 
-## Enable once (repository owner)
+GitHub Actions deployment has been queued without publishing the site.
+PaceLab's frontend uses browser-supported JavaScript modules with relative
+imports and can be served directly from the repository root.
 
-1. Open [PaceLab → Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages).
-2. Under **Build and deployment**, choose **GitHub Actions** as the Source.
-3. Open [Actions → Deploy static demo to GitHub Pages](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml).
-4. Select **Run workflow** on the `main` branch.
-5. Wait for GitHub Actions to report successful deployment. Use the URL it displays.
+1. Open [Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages).
+2. Under **Build and deployment**, set **Source → Deploy from a branch**.
+3. Set **Branch: main**, **Folder: /(root)** and click **Save**.
+4. Once GitHub reports the Pages site is published, open
+   **https://dokeefe414.github.io/Pacelab/**.
 
-The *expected* GitHub Pages address for this repository is
-`https://dokeefe414.github.io/Pacelab/`, but do not share it as a
-working live link until the workflow successfully publishes and the
-address responds. When enabled, new frontend changes merged into `main`
-are deployed automatically by the existing workflow.
+The repository includes `.nojekyll` to serve the HTML, CSS and JavaScript
+files directly, with no npm build required. This is a **static demonstration
+only**, using synthetic workouts, browser-local storage, and a local
+statistics assistant. The full FastAPI/Postgres service is not deployed.
 
-## What the public demo can and cannot do
+## If the link still gives 404
 
-**Works without a backend:** Synthetic running log, manual local training
-entry, charts, race-equivalence formula, and local deterministic assistant.
+- Confirm the **Source** actually shows `Deploy from a branch`, not
+  `GitHub Actions`, and the selected folder is `/(root)`.
+- Confirm the repository is **public**, and that GitHub Pages now shows
+  a **Visit site** link and a successful deployment.
+- If Pages displays an error or a pending approval, follow its exact
+  message. A queued GitHub Actions job is not proof of a published site.
+- Confirm the address is `/Pacelab/` (matching the repository name).
+- If you just enabled Pages, refresh after publication completes. A site
+  remains unavailable until GitHub has finished publishing it.
 
-**Requires hosted server:** Private login, cloud workout persistence,
-FIT/GPX/TCX/ZIP imports, real personalized ML inference, and optional
-provider-backed assistant. All such features remain under your control
-and must not be represented as publicly hosted by this Pages demo.
+## Optional: built artifact through Actions
 
-Pages publishes only the Vite `dist/` artifact. No raw private COROS FIT
-files, GPS routes, PostgreSQL databases, tokens, or secrets are included.
+The repository also has a workflow under
+[Actions → Deploy static demo to GitHub Pages](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml).
+That approach requires **Source: GitHub Actions**, a successful workflow
+run and available Actions workers. If all actions remain queued, use
+the recommended branch route instead.
 
-## Troubleshooting
+## Capabilities and privacy
 
-- A deployment failure mentioning an unavailable Pages site usually
-  means Settings → Pages has not been configured for GitHub Actions yet.
-- If the link shows 404, check the deployment workflow and the repository
-  Pages settings; repository URLs are case-sensitive.
-- If the demo looks stale, reload after the deployment completes.
-- If private account sign-in is unavailable, that's expected on the
-  static Pages deployment unless you configure a separate HTTPS API.
-
-The full private-beta backend can be deployed independently later after
-the security checklist in `deploy/README.md`.
+No downloads or installations are needed for visitors to use the **demo**.
+Signed-in account features, secure workout persistence, raw COROS imports
+and trained ML inference need a separately hosted HTTPS backend and database.
+The static site should not ask visitors to enter a password for an unavailable
+backend. No original COROS files or personal GPS routes are included in Pages.
