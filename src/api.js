@@ -82,7 +82,10 @@ export function requestMLPrediction(features) {
 
 export function fetchWorkoutDetail(id) {return request('/workouts/' + encodeURIComponent(id));}
 export function fetchInsightsSummary() {return request('/insights/summary');}
-export function askAssistant(question) {return request('/assistant/ask', {method:'POST',body:JSON.stringify({question})});}
+export function askAssistant(question,allowExternalProcessing=false) {
+  return request('/assistant/ask',{method:'POST',
+    body:JSON.stringify({question,allowExternalProcessing: Boolean(allowExternalProcessing)})});
+}
 export function recordedRacePrediction(targetMeters) {return request('/predict/history?targetMeters=' + encodeURIComponent(targetMeters));}
 export function fetchRaceFeatures(eventMeters) {return request('/predict/features?eventMeters=' + encodeURIComponent(eventMeters));}
 export async function uploadActivity(file) {

@@ -220,7 +220,7 @@ async function askTrainingAssistant(event){
   }
   button.disabled=true;answer.textContent='Checking your actual training statistics…';
   try{
-    const result=await askAssistant(input.value.trim());
+    const result=await askAssistant(input.value.trim(),$('#assistant-external-consent').checked);
     answer.textContent=result.answer;
     $('#assistant-supporting-workouts').innerHTML=(result.supportingWorkouts||[]).length?
       '<h3>Selected relevant workouts</h3><p class="body-copy">'+escapeHTML(result.evidenceNote||'Representative records behind your statistics.')+'</p>'+result.supportingWorkouts.map(w=>
@@ -228,7 +228,10 @@ async function askTrainingAssistant(event){
         '<span>'+escapeHTML(w.date)+' · '+escapeHTML(w.type)+'</span><strong>'+
         Number(w.distanceMiles).toFixed(2)+' mi</strong></button>').join(''):
       '<p class="body-copy">No logged workouts available as supporting evidence.</p>';
-    $('#assistant-footnote').textContent='Engine: '+result.engine+' · As of '+result.asOf+' · '+result.disclaimer;
+    $('#assistant-footnote').textContent='Engine: '+result.engine+' · As of '+result.asOf+
+      (result.externalProcessingUsed?' · External AI processing explicitly authorized for this question.':' · No external AI processing used.')+
+      ' · '+result.disclaimer;
+    $('#assistant-external-consent').checked=false;
   }catch(err){answer.textContent='Unable to analyze workouts: '+err.message;}finally{button.disabled=false;}
 }
 
