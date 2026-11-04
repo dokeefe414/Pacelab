@@ -20,6 +20,11 @@ jobs:
         env:
           PACELAB_DATABASE_URL: sqlite:////tmp/pacelab-migration-ci.sqlite
       - run: python -m compileall -q app ml migrations
+      - name: Validate backup and restore script syntax
+        working-directory: .
+        run: |
+          bash -n deploy/backup-postgres.sh
+          bash -n deploy/test-restore-postgres.sh
       - name: Validate local and HTTPS Docker Compose configurations
         working-directory: .
         env:
