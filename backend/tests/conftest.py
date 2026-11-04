@@ -9,10 +9,14 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db import Base, get_db
 from app.main import app
+from app.security_controls import rate_guard
 
 
 @pytest.fixture
 def client(tmp_path):
+    # Isolate the in-process rate guard between independent test clients.
+    with rate_guard._lock:
+        rate_guard._visits.clear()
     engine = create_engine("sqlite:///" + str(tmp_path / "test.sqlite"), connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
     sessions = sessionmaker(bind=engine, expire_on_commit=False)

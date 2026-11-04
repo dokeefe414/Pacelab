@@ -1,7 +1,7 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
-import {advancedStats,routePath,linePath,localTrainingAnswer} from './intelligence-core.js';
-import {apiIsConnected,uploadActivity,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
+import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,localTrainingAnswer} from './intelligence-core.js';
+import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
 
 const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -20,6 +20,7 @@ export function initIntelligence(options){
     }catch(err){output.textContent=err.message;}
   });
   $('#assistant-form').addEventListener('submit',askTrainingAssistant);
+  $('#compare-form').addEventListener('submit',compareTrainingPeriods);
   document.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',()=>{
     $('#assistant-question').value=b.dataset.ask;
     $('#assistant-form').requestSubmit();
@@ -64,7 +65,7 @@ export function renderIntelligence(){
       'Demo mode: questions use synthetic sample workouts and never leave your browser. Sign in for real account analysis.':
       'Local mode: answers use workouts stored in your browser. Sign in to use server-backed analysis.');
   $('#fit-import-hint').textContent=apiIsConnected()?
-    'Choose .fit, .gpx or .tcx exports — up to 10 MB each; your route samples stay inside your account.':
+    'Choose FIT/GPX/TCX files (10 MB each) or a COROS bulk ZIP export (25 MB max, 100 activities). GPS remains private to your account.':
     'Sign in to import activity files. Local CSV import remains available without an account.';
 }
 function chart(title,path,width,height){
@@ -110,6 +111,7 @@ async function openWorkout(id){
       '<div class="detail-charts">'+
         chart('Route trace (schematic; not a map)',routePath(track),320,150)+
         chart('Heart-rate samples',linePath(track,'heartRate'),320,120)+
+        chart('Segment pace (derived; GPS gaps filtered)',linePath(paceTrace(track),'paceSeconds'),320,120)+
         chart('Elevation samples',linePath(track,'elevationMeters'),320,120)+'</div>'+
       (laps.length?'<h3>Splits / laps</h3><div class="split-table">'+laps.map(l=>
         '<div><span>Lap '+Number(l.number||1)+' · '+Number(l.distanceMiles||0).toFixed(2)+' mi</span><strong>'+
@@ -140,8 +142,14 @@ async function handleFiles(event){
     const file=chosen[i];
     status.textContent='Processing '+(i+1)+' / '+chosen.length+': '+file.name;
     try{
-      const result=await uploadActivity(file);
-      if(result.imported)added++;else duplicates++;
+      if(file.name.toLowerCase().endsWith('.zip')){
+        const result=await uploadBulkArchive(file);
+        added+=result.imported;duplicates+=result.duplicates;
+        failed.push(...result.files.filter(x=>x.status==='failed').map(x=>file.name+' / '+x.name+': '+x.message));
+      }else{
+        const result=await uploadActivity(file);
+        if(result.imported)added++;else duplicates++;
+      }
     }catch(err){failed.push(file.name+': '+err.message);}
   }
   input.value='';
@@ -192,4 +200,25 @@ async function askTrainingAssistant(event){
     answer.textContent=result.answer;
     $('#assistant-footnote').textContent='Engine: '+result.engine+' · As of '+result.asOf+' · '+result.disclaimer;
   }catch(err){answer.textContent='Unable to analyze workouts: '+err.message;}finally{button.disabled=false;}
+}
+
+function compareTrainingPeriods(event){
+  event.preventDefault();
+  const firstStart=$('#compare-start-a').value;
+  const firstEnd=$('#compare-end-a').value;
+  const secondStart=$('#compare-start-b').value;
+  const secondEnd=$('#compare-end-b').value;
+  const output=$('#compare-result');
+  try{
+    const {first,second}=compareDateWindows(context.getWorkouts(),firstStart,firstEnd,secondStart,secondEnd);
+    const delta=second.miles-first.miles;
+    const pace=(seconds)=>Number.isFinite(seconds)?formatTime(seconds)+'/mi':'—';
+    output.innerHTML='<div class="compare-columns">'+
+      '<div>'+metric('First period',first.miles+' mi',first.count+' logged workouts')+
+      metric('Average pace',pace(first.averagePaceSecondsPerMile),first.hardSessions+' hard sessions')+'</div>'+
+      '<div>'+metric('Second period',second.miles+' mi',second.count+' logged workouts')+
+      metric('Average pace',pace(second.averagePaceSecondsPerMile),second.hardSessions+' hard sessions')+'</div></div>'+
+      '<p class="body-copy"><strong>'+Math.abs(delta).toFixed(1)+' miles '+(delta>=0?'more':'fewer')+
+      '</strong> in the second selected period. Select equal-length windows for fair volume comparisons. Pace is across mixed workouts and terrain.</p>';
+  }catch(err){output.textContent=err.message;}
 }

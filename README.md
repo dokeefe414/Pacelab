@@ -1,6 +1,6 @@
 # PaceLab 🏃 — Running analytics and race prediction
 
-**PaceLab v0.3** is a full-stack, privacy-aware running analytics platform. Runners can import device activity files, inspect training trends and route traces, ask grounded questions about their recorded workouts, and experiment with race predictions.
+**PaceLab v0.4** is a full-stack, privacy-aware running analytics platform. Runners can import device activity files, inspect training trends and route traces, ask grounded questions about their recorded workouts, and experiment with race predictions.
 
 Built by **Daniel O'Keefe** as a software-engineering and AI/ML portfolio project.
 
@@ -11,7 +11,7 @@ Built by **Daniel O'Keefe** as a software-engineering and AI/ML portfolio projec
 | Area | Functionality |
 | --- | --- |
 | Running dashboard | Weekly mileage, duration, average pace, activity breakdown |
-| Device ingestion | Private FIT, GPX and TCX uploads (one activity per file; select multiple files together) |
+| Device ingestion | Private FIT, GPX and TCX uploads, plus bounded COROS bulk ZIP ingestion (up to 100 supported activities per archive) |
 | Workout details | Distance, duration, heart rate, ascent, device laps / approximate mile splits, schematic route, HR and elevation traces |
 | Data persistence | FastAPI, PostgreSQL with Alembic migrations, authenticated accounts, user-isolated records |
 | Duplicate detection | Hash-matched imports plus start-time/distance/duration cross-format checks |
@@ -66,8 +66,8 @@ Visit the local Vite URL (normally http://localhost:5173). API docs: **http://lo
 ## Import COROS workouts
 
 1. On COROS, open the recorded activity and select **Export Data**. Choose **FIT** to retain heart-rate/sensor metrics; GPX is an option if you only need a timed GPS track.
-2. For bulk history, sign in to **COROS Training Hub** on desktop, go to **Activity List → Export Data**, and request **FIT or TCX**. Extract the ZIP download to individual activity files.
-3. In PaceLab, sign in and go to **Workout log → FIT / GPX / TCX**. Select up to 50 files per batch (up to **10 MB per file**).
+2. For bulk history, sign in to **COROS Training Hub** on desktop, go to **Activity List → Export Data**, and request **FIT or TCX**. Import the ZIP directly or extract individual activity files.
+3. In PaceLab, sign in and go to **Workout log → FIT / GPX / TCX**. Select up to 50 individual files per batch (up to **10 MB per file**) or a bulk ZIP (up to **25 MB compressed**, 100 supported activities and 80 MB total uncompressed).
 4. Open a workout's **Details** to see its route trace, HR and elevation charts, splits and notes. Change workout type to **Race** for actual race efforts so that PR analytics and race-history prediction can use them.
 
 **Important limitations:** PaceLab does not currently auto-connect to COROS accounts, import ZIP archives directly, read daily sleep/HRV data, or guarantee full fidelity for every vendor-specific FIT field. Some export files may omit HR, GPS or lap data. Bad files are rejected with a reason; repeat imports are skipped. Original uploaded file bytes are not stored, but **reduced GPS coordinate samples are saved privately in your account**.
@@ -91,7 +91,7 @@ python -m pip install -r requirements-ml.txt
 python -m ml.train --csv path/to/real-race-training.csv --output models/race_rf.joblib
 \`\`\`
 
-Training currently requires **at least 60 real, labeled race records**, typically more than one runner's short history. Combine records only with appropriate permission. A time-ordered 70/15/15 split compares a median baseline with a random forest; model selection uses validation only and a held-out test set reports MAE and empirical interval coverage. This is a research experiment, not a clinically or athletically validated performance model.
+Training currently requires **at least 60 real, labeled race records**, typically more than one runner's short history. Combine records only with appropriate permission. A date-grouped 70/15/15 split compares **median, ridge and random-forest** models. A previous-race Riegel comparator and a rolling-origin backtest report out-of-sample errors. Selection uses validation only; held-out test results include MAE, RMSE, event-level errors and empirical interval coverage. A `.metrics.json` report is saved next to the model artifact. This is a research experiment, not a clinically or athletically validated performance model.
 
 For Docker, place your own trusted artifact under \`backend/models/\`, and set \`PACELAB_MODEL_PATH=/app/models/race_rf.joblib\` in your root \`.env\`. Never use untrusted joblib artifacts (they can execute code when loaded). Models and raw training data are gitignored.
 

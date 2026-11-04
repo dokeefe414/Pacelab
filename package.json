@@ -1,1 +1,18 @@
-{"name":"pacelab","version":"0.1.0","private":true,"type":"module","description":"Local-first running analytics and race equivalence dashboard","scripts":{"dev":"vite --host 0.0.0.0","build":"vite build","preview":"vite preview --host 0.0.0.0","test":"node --test"},"devDependencies":{"vite":"^6.3.0"}}
+{
+  "name": "pacelab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first running analytics and race equivalence dashboard",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0",
+    "@playwright/test": "^1.56.1"
+  }
+}

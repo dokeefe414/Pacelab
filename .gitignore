@@ -17,3 +17,7 @@ backend/data/
 *.joblib
 *.pyc
 .env
+
+# Playwright
+playwright-report/
+test-results/
