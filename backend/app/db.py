@@ -12,7 +12,13 @@ class Base(DeclarativeBase):
 
 def database_url() -> str:
     if os.getenv("PACELAB_DATABASE_URL"):
-        return os.environ["PACELAB_DATABASE_URL"]
+        url = os.environ["PACELAB_DATABASE_URL"]
+        # Managed providers commonly produce plain postgresql:// URLs.
+        # Explicitly choose psycopg3 rather than the psycopg2 default.
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
     if os.getenv("PACELAB_DB_HOST"):
         return URL.create(
             "postgresql+psycopg",

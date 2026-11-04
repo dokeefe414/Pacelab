@@ -1,0 +1,37 @@
+# Optional infrastructure. Nothing is hosted or billed until the repository
+# owner explicitly reviews costs and applies this Blueprint in Render.
+# https://render.com/docs/blueprint-spec
+previews:
+  generation: off
+
+services:
+  - type: web
+    name: pacelab-private-api
+    runtime: docker
+    plan: 0.5c-512mb
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/ready
+    envVars:
+      - key: PACELAB_ENV
+        value: production
+      - key: PACELAB_PUBLIC_SIGNUP
+        value: "false"
+      - key: PACELAB_SECRET_KEY
+        generateValue: true
+      - key: PACELAB_DATABASE_URL
+        fromDatabase:
+          name: pacelab-private-db
+          property: connectionString
+      - key: PACELAB_CORS_ORIGINS
+        value: https://dokeefe414.github.io
+      - key: PACELAB_ASSISTANT_PROVIDER
+        value: "off"
+      - key: PORT
+        value: "8000"
+
+databases:
+  - name: pacelab-private-db
+    plan: 0.5c-1g
+    databaseName: pacelab
+    user: pacelab

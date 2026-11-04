@@ -82,3 +82,12 @@ def test_production_registration_is_disabled_by_default(client, monkeypatch):
         "email": "private@example.com", "password": "very-strong-password-123"
     })
     assert response.status_code == 403
+
+
+
+def test_managed_database_url_uses_psycopg3(monkeypatch):
+    from app.db import database_url
+    monkeypatch.setenv("PACELAB_DATABASE_URL", "postgresql://runner:p%40ss@internal.db:5432/pacelab")
+    assert database_url() == "postgresql+psycopg://runner:p%40ss@internal.db:5432/pacelab"
+    monkeypatch.setenv("PACELAB_DATABASE_URL", "postgres://runner:pw@internal.db/pacelab")
+    assert database_url() == "postgresql+psycopg://runner:pw@internal.db/pacelab"
