@@ -30,7 +30,7 @@ def load_model(path: str):
 
 
 @router.post("/ml")
-def machine_learning_prediction(features: RaceFeatures):
+def machine_learning_prediction(features: RaceFeatures, user: User = Depends(current_user)):
     path = os.getenv("PACELAB_MODEL_PATH")
     if not path or not Path(path).is_file():
         raise HTTPException(503, "No validated model artifact has been configured")

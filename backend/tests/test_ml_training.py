@@ -34,7 +34,10 @@ def test_training_pipeline_and_optional_inference(client, tmp_path, monkeypatch)
     artifact = joblib.load(path)  # We made this artifact ourselves.
     assert artifact["demo"] is False  # Flag means the trainer doesn't fabricate real-world dataset.
     monkeypatch.setenv("PACELAB_MODEL_PATH", str(path))
-    response = client.post("/api/predict/ml", json={
+    account = client.post("/api/auth/register", json={"email":"inference-test@example.com", "password":"very-strong-password-123"})
+    assert account.status_code == 201
+    headers = {"Authorization": "Bearer " + account.json()["access_token"]}
+    response = client.post("/api/predict/ml", headers=headers, json={
         "eventMeters": 5000, "weeklyMiles4w": 35,
         "averageEasyPaceSecondsPerMile": 480,
         "hardSessions4w": 4, "longestRunMiles": 10
