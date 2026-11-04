@@ -1,0 +1,22 @@
+name: Backend CI
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+      - run: alembic upgrade head
+        env:
+          PACELAB_DATABASE_URL: sqlite:////tmp/pacelab-migration-ci.sqlite
+      - run: python -m compileall -q app ml migrations
