@@ -20,3 +20,12 @@ jobs:
         env:
           PACELAB_DATABASE_URL: sqlite:////tmp/pacelab-migration-ci.sqlite
       - run: python -m compileall -q app ml migrations
+      - name: Validate local and HTTPS Docker Compose configurations
+        working-directory: .
+        env:
+          POSTGRES_PASSWORD: ci-example-pass
+          PACELAB_SECRET_KEY: ci-example-secret-is-long-enough-to-pass-checks
+          PACELAB_DOMAIN: example.com
+        run: |
+          docker compose -f compose.yml config --quiet
+          docker compose -f compose.production.yml config --quiet

@@ -2,6 +2,7 @@
 import os
 from collections.abc import Iterator
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 
@@ -10,7 +11,18 @@ class Base(DeclarativeBase):
 
 
 def database_url() -> str:
-    return os.getenv("PACELAB_DATABASE_URL", "sqlite:///./pacelab-dev.db")
+    if os.getenv("PACELAB_DATABASE_URL"):
+        return os.environ["PACELAB_DATABASE_URL"]
+    if os.getenv("PACELAB_DB_HOST"):
+        return URL.create(
+            "postgresql+psycopg",
+            username=os.getenv("PACELAB_DB_USER", "pacelab"),
+            password=os.getenv("PACELAB_DB_PASSWORD"),
+            host=os.environ["PACELAB_DB_HOST"],
+            port=int(os.getenv("PACELAB_DB_PORT", "5432")),
+            database=os.getenv("PACELAB_DB_NAME", "pacelab"),
+        ).render_as_string(hide_password=False)
+    return "sqlite:///./pacelab-dev.db"
 
 
 def make_engine(url: str | None = None):

@@ -10,7 +10,10 @@ _DEFAULT_DEV_SECRET = "pacelab-unsafe-local-development-secret-do-not-deploy"
 _SECRET = os.getenv("PACELAB_SECRET_KEY", _DEFAULT_DEV_SECRET)
 _ENVIRONMENT = os.getenv("PACELAB_ENV", "development").lower()
 
-if _ENVIRONMENT == "production" and (_SECRET == _DEFAULT_DEV_SECRET or len(_SECRET) < 32):
+if _ENVIRONMENT == "production" and (
+    _SECRET == _DEFAULT_DEV_SECRET or len(_SECRET) < 32
+    or _SECRET.lower().startswith(("replace-", "example-", "changeme", "your-"))
+):
     raise RuntimeError("PACELAB_SECRET_KEY must be a unique secret of at least 32 characters in production")
 
 hashing = PasswordHash.recommended()

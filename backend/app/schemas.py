@@ -49,6 +49,23 @@ class WorkoutPayload(BaseModel):
 
 class WorkoutResponse(WorkoutPayload):
     id: str
+    source: str | None = None
+    startTime: datetime | None = None
+    avgHeartRate: int | None = None
+    elevationGainMeters: float | None = None
+
+
+class WorkoutDetailResponse(WorkoutResponse):
+    laps: list[dict] = Field(default_factory=list)
+    track: list[dict] = Field(default_factory=list)
+
+
+class AssistantRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+
+
+class EventRequest(BaseModel):
+    targetMeters: float = Field(ge=800, le=10000, allow_inf_nan=False)
 
 
 class RiegelRequest(BaseModel):

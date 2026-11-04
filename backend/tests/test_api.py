@@ -51,4 +51,34 @@ def test_riegel_and_model_unavailable(client, monkeypatch):
     assert client.post("/api/predict/riegel", json={"referenceSeconds":0, "referenceMeters":5000, "targetMeters":8000}).status_code == 422
     monkeypatch.delenv("PACELAB_MODEL_PATH", raising=False)
     ml = client.post("/api/predict/ml", json={"eventMeters":5000, "weeklyMiles4w":40, "averageEasyPaceSecondsPerMile":480, "hardSessions4w":5, "longestRunMiles":12})
-    assert ml.status_code == 503
+    assert ml.status_code == 401
+    auth = register(client, "model-missing@example.com")
+    ml_auth = client.post("/api/predict/ml", headers=auth, json={"eventMeters":5000, "weeklyMiles4w":40, "averageEasyPaceSecondsPerMile":480, "hardSessions4w":5, "longestRunMiles":12})
+    assert ml_auth.status_code == 503
+
+
+def test_race_export_requires_auth_and_returns_header(client):
+    assert client.get("/api/exports/race-training.csv").status_code == 401
+    auth = register(client, "race-csv@example.com")
+    response = client.get("/api/exports/race-training.csv", headers=auth)
+    assert response.status_code == 200
+    assert response.headers["x-pacelab-valid-race-rows"] == "0"
+    assert response.text.startswith("date,event_meters,weekly_miles_4w,")
+
+
+def test_postgresql_connection_url_escapes_reserved_password_chars(monkeypatch):
+    from app.db import database_url
+    monkeypatch.delenv("PACELAB_DATABASE_URL", raising=False)
+    monkeypatch.setenv("PACELAB_DB_HOST", "db")
+    monkeypatch.setenv("PACELAB_DB_PASSWORD", "strong:password@with#symbols")
+    url = database_url()
+    assert "strong%3Apassword%40with%23symbols" in url
+
+
+def test_production_registration_is_disabled_by_default(client, monkeypatch):
+    monkeypatch.setenv("PACELAB_ENV", "production")
+    monkeypatch.delenv("PACELAB_PUBLIC_SIGNUP", raising=False)
+    response = client.post("/api/auth/register", json={
+        "email": "private@example.com", "password": "very-strong-password-123"
+    })
+    assert response.status_code == 403
