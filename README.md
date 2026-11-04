@@ -142,6 +142,13 @@ deploy/                    Deployment setup and security checklist
 .github/workflows/         Frontend and backend CI
 \`\`\`
 
+## Optional public portfolio demo
+
+For a browser-playable **frontend-only** demonstration, follow
+[GitHub Pages setup](docs/public-demo.md) and run the included manual
+deployment workflow. Sample workouts are synthetic; backend accounts and
+FIT uploads require your own hosted API.
+
 ## Tests and deployment
 
 \`\`\`bash
