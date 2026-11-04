@@ -20,6 +20,11 @@ export function initIntelligence(options){
     }catch(err){output.textContent=err.message;}
   });
   $('#assistant-form').addEventListener('submit',askTrainingAssistant);
+  $('#activity-import-ack').addEventListener('change',()=>{
+    $('#activity-import-accept').disabled=!$('#activity-import-ack').checked;
+  });
+  $('#activity-import-accept').addEventListener('click',()=>$('#activity-import-consent').close('approve'));
+  $('#activity-import-cancel').addEventListener('click',()=>$('#activity-import-consent').close('cancel'));
   $('#compare-form').addEventListener('submit',compareTrainingPeriods);
   document.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',()=>{
     $('#assistant-question').value=b.dataset.ask;
@@ -154,12 +159,36 @@ async function openWorkout(id){
     }
   }catch(err){target.textContent='Could not fetch workout: '+err.message;}
 }
+function requestActivityImportConsent(files){
+  const dialog=$('#activity-import-consent');
+  const checkbox=$('#activity-import-ack');
+  const confirm=$('#activity-import-accept');
+  const total=files.reduce((sum,file)=>sum+file.size,0);
+  $('#activity-import-file-summary').textContent=
+    files.length+' selected file(s), '+(total/1024/1024).toFixed(2)+' MiB total: '+
+    files.slice(0,4).map(file=>file.name).join(', ')+
+    (files.length>4?' and '+(files.length-4)+' more':'');
+  checkbox.checked=false;
+  confirm.disabled=true;
+  dialog.returnValue='';
+  return new Promise(resolve=>{
+    dialog.addEventListener('close',()=>resolve(dialog.returnValue==='approve'),{once:true});
+    dialog.showModal();
+  });
+}
+
 async function handleFiles(event){
   const input=event.target;
   const chosen=[...input.files].slice(0,50);
   if(!chosen.length)return;
   if(!apiIsConnected()){context.toast('Sign in to import activity files.');input.value='';return;}
   const status=$('#fit-import-status');let added=0,duplicates=0,failed=[];
+  const approved=await requestActivityImportConsent(chosen);
+  if(!approved){
+    input.value='';
+    status.textContent='Import cancelled. Nothing was uploaded.';
+    return;
+  }
   status.textContent='Importing '+chosen.length+' files…';
   for(let i=0;i<chosen.length;i++){
     const file=chosen[i];

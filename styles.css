@@ -116,3 +116,11 @@
   padding:14px;border:1px solid #32483f;border-radius:10px;color:#bacbc0;
   background:#15262a;font-size:12px;line-height:1.55}
 .assistant-optin input{margin-top:3px;accent-color:#b5f36c;flex-shrink:0}
+
+.import-consent-dialog{width:min(570px,calc(100vw - 18px));padding:25px}
+.import-consent-dialog h2{font-size:24px}
+.import-consent-check{display:flex;gap:12px;align-items:flex-start;padding:14px;
+  border:1px solid #537154;border-radius:10px;background:#1c302a;font-size:12px}
+.import-consent-check input{accent-color:#b5f36c;margin-top:3px;flex-shrink:0}
+.import-consent-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:18px}
+.import-consent-actions button:disabled{opacity:.45;cursor:not-allowed}
