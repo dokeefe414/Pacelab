@@ -12,6 +12,7 @@ From repository root:
 npm install
 npm test
 npm run build
+npm run check:docs
 ```
 
 Tests use Node's built-in test runner. They cover time and pace formulas,

@@ -1,15 +1,16 @@
 {
   "name": "pacelab",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
-  "description": "Local-first running analytics and race equivalence dashboard",
+  "description": "Full-stack, privacy-aware running analytics with a public synthetic demo and experimental ML evaluation",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:docs": "node scripts/check-doc-links.mjs"
   },
   "devDependencies": {
     "vite": "^6.3.0",
