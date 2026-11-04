@@ -119,3 +119,36 @@ def test_insights_assistant_and_race_history(client, monkeypatch):
     assert client.post("/api/assistant/ask", json={"question":"Give me mileage"}).status_code == 401
     assert client.get("/api/insights/summary").status_code == 401
     assert client.get("/api/predict/history?targetMeters=5000").status_code == 401
+
+
+
+def test_assistant_selects_workouts_relevant_to_question(client, monkeypatch):
+    from datetime import date, timedelta
+    auth = register(client,"relevant-assistant@example.com")
+    today=date.today()
+    for typ,offset,hr in [("Easy",0,155),("Intervals",0,None),
+                          ("Easy",9,None),("Race",50,170)]:
+        data=payload(5.0)
+        data["date"]=(today-timedelta(days=offset)).isoformat()
+        data["type"]=typ
+        # Manual workouts do not have HR; the assistant should not invent readings.
+        assert client.post("/api/workouts",headers=auth,json=data).status_code==201
+    monkeypatch.delenv("PACELAB_ASSISTANT_PROVIDER", raising=False)
+    runs=client.post("/api/assistant/ask",headers=auth,
+        json={"question":"What is my easy pace in the last month?"})
+    assert runs.status_code==200
+    selected=runs.json()["supportingWorkouts"]
+    assert selected and all(w["type"] in ("Easy","Recovery") for w in selected)
+    assert len(selected)==2
+    mileage=client.post("/api/assistant/ask",headers=auth,
+        json={"question":"How many miles in the last 7 days?"})
+    assert mileage.status_code==200
+    assert len(mileage.json()["supportingWorkouts"])==2
+    races=client.post("/api/assistant/ask",headers=auth,
+        json={"question":"What are my recorded race bests?"})
+    assert races.status_code==200
+    assert len(races.json()["supportingWorkouts"])==1
+    assert races.json()["supportingWorkouts"][0]["type"]=="Race"
+    for returned in (runs,mileage,races):
+        assert all("notes" not in w and "track" not in w
+                   for w in returned.json()["supportingWorkouts"])

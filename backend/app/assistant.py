@@ -6,6 +6,7 @@ No raw routes, workout notes, email, or credentials are sent to the provider.
 """
 import json
 import os
+from datetime import date, timedelta
 
 import httpx
 from fastapi import APIRouter, Depends
@@ -65,6 +66,36 @@ async def _llm_phrase(question, facts):
         return None
 
 
+
+
+def supporting_workouts(question, records, facts, *, limit=8):
+    """Return *relevant* user-owned sources for a grounded answer.
+
+    The assistant's aggregate summaries can use more than the eight shown
+    entries; the evidence list is clearly called "selected records", not
+    a claim that every source has been enumerated.
+    """
+    query=question.lower()
+    today=date.fromisoformat(facts["asOf"])
+    if any(word in query for word in ("race", "personal best", "pr ", "record")):
+        selected=[w for w in records if w.type=="Race" and w.date<=today]
+    else:
+        window=14 if any(word in query for word in ("two weeks", "2 weeks", "fortnight", "previous week")) else 7 if any(word in query for word in ("this week", "last week", "last 7")) else 28
+        selected=[w for w in records if today-timedelta(days=window-1)<=w.date<=today]
+        if any(word in query for word in ("easy pace", "recovery pace", "easy running")):
+            selected=[w for w in selected if w.type in ("Easy", "Recovery")]
+        elif any(word in query for word in ("heart rate", "pulse", " hr", "bpm")):
+            selected=[w for w in selected if w.avg_heart_rate is not None]
+        elif any(word in query for word in ("hard session", "intensity", "tempo", "interval")):
+            selected=[w for w in selected if w.type in ("Tempo", "Intervals", "Race")]
+    selected.sort(key=lambda w:(w.date,w.created_at),reverse=True)
+    return [{
+        "id":w.id,"date":w.date.isoformat(),"type":w.type,
+        "distanceMiles":round(w.distance_miles,2),
+        "durationSeconds":w.duration_seconds,
+    } for w in selected[:limit]]
+
+
 @router.post("/ask")
 async def ask_assistant(
     request: AssistantRequest,
@@ -79,13 +110,9 @@ async def ask_assistant(
         response = await _llm_phrase(request.question, facts)
         if response:
             answer, engine = response, "language-model-with-verified-statistics"
-    recent = [record for record in records if record.date.isoformat() <= facts["asOf"]]
-    recent.sort(key=lambda w: (w.date,w.created_at), reverse=True)
-    support = [{
-        "id": w.id, "date": w.date.isoformat(), "type": w.type,
-        "distanceMiles": round(w.distance_miles,2), "durationSeconds": w.duration_seconds,
-    } for w in recent[:8]]
+    support = supporting_workouts(request.question, records, facts)
     return {"answer": answer, "engine": engine, "asOf": facts["asOf"],
+            "evidenceNote": "A selection of relevant recent records, not all workouts used in the aggregates.",
             "supportingWorkouts": support, "evidence": {
         "last7": facts["last7"], "previous7": facts["previous7"], "last28": facts["last28"]
     }, "disclaimer": "Based on logged workouts only. Not medical advice or a validated training prescription."}
