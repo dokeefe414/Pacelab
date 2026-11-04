@@ -91,7 +91,7 @@ python -m pip install -r requirements-ml.txt
 python -m ml.train --csv path/to/real-race-training.csv --output models/race_rf.joblib
 \`\`\`
 
-Training currently requires **at least 60 real, labeled race records**, typically more than one runner's short history. Combine records only with appropriate permission. A time-ordered 70/15/15 split compares a median baseline with a random forest; model selection uses validation only and a held-out test set reports MAE and empirical interval coverage. This is a research experiment, not a clinically or athletically validated performance model.
+Training currently requires **at least 60 real, labeled race records**, typically more than one runner's short history. Combine records only with appropriate permission. A date-grouped 70/15/15 split compares **median, ridge and random-forest** models. A previous-race Riegel comparator and a rolling-origin backtest report out-of-sample errors. Selection uses validation only; held-out test results include MAE, RMSE, event-level errors and empirical interval coverage. A `.metrics.json` report is saved next to the model artifact. This is a research experiment, not a clinically or athletically validated performance model.
 
 For Docker, place your own trusted artifact under \`backend/models/\`, and set \`PACELAB_MODEL_PATH=/app/models/race_rf.joblib\` in your root \`.env\`. Never use untrusted joblib artifacts (they can execute code when loaded). Models and raw training data are gitignored.
 
