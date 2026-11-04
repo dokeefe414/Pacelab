@@ -100,3 +100,10 @@ export async function uploadActivity(file) {
   }
   return data;
 }
+
+export function updateRemoteWorkout(id, workout) {
+  const {date,type,distanceMiles,durationSeconds,notes} = workout;
+  return request('/workouts/' + encodeURIComponent(id),{
+    method:'PUT',body:JSON.stringify({date,type,distanceMiles,durationSeconds,notes}),
+  });
+}

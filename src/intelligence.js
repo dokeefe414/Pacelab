@@ -1,7 +1,7 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {advancedStats,routePath,linePath} from './intelligence-core.js';
-import {apiIsConnected,uploadActivity,fetchWorkoutDetail,askAssistant,recordedRacePrediction,fetchRaceFeatures} from './api.js';
+import {apiIsConnected,uploadActivity,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures} from './api.js';
 
 const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -41,6 +41,7 @@ export function renderIntelligence(){
     metric('Hard sessions',String(stats.hardSessions),'Last 28 days · tempo / intervals / race')+
     metric('Weighted minutes',stats.weightedMinutes.toFixed(0),'Illustrative effort proxy, not medical load');
   $('#load-chart').innerHTML=bars(stats.weeks,'weightedMinutes','weighted min');
+  $('#pace-trend-chart').innerHTML=paceTrend(context.getWorkouts(),stats.weeks);
   $('#pace-summary').textContent=stats.easyPace?
     'Easy / recovery pace across the last 28 days: '+formatTime(stats.easyPace)+' per mile (distance weighted).':
     'No easy / recovery pace data in the last 28 days.';
@@ -59,6 +60,22 @@ export function renderIntelligence(){
 }
 function chart(title,path,width,height){
   return path?'<div class="detail-chart"><strong>'+title+'</strong><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+title+'"><path d="'+path+'" fill="none" stroke="#b5f36c" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/></svg></div>':'';
+}
+function paceTrend(workouts,weeks){
+  const series=weeks.map(week=>{
+    const start=new Date(week.date+'T12:00:00Z');
+    const end=new Date(start);end.setUTCDate(end.getUTCDate()+6);
+    const upper=end.toISOString().slice(0,10);
+    const runs=workouts.filter(w=>w.date>=week.date&&w.date<=upper&&['Easy','Recovery'].includes(w.type));
+    const miles=runs.reduce((s,w)=>s+w.distanceMiles,0);
+    return {elapsed:weeks.indexOf(week),pace:miles?runs.reduce((s,w)=>s+w.durationSeconds,0)/miles:null};
+  });
+  const valid=series.filter(x=>Number.isFinite(x.pace));
+  if(valid.length<2)return '<p class="body-copy">At least two weeks with Easy / Recovery runs are required to plot pace trends.</p>';
+  const path=linePath(valid,'pace',440,150);
+  return '<div class="trend-svg"><svg viewBox="0 0 440 150" role="img" aria-label="Easy and recovery pace by week; lower is faster">'+
+    '<path d="'+path+'" fill="none" stroke="#b5f36c" stroke-width="3" stroke-linecap="round"/></svg></div>'+
+    '<p class="body-copy">Easy / Recovery pace by week (higher line = slower pace on this plot). Not a race-fitness trend.</p>';
 }
 async function openWorkout(id){
   const local=context.getWorkouts().find(x=>x.id===id);
@@ -88,7 +105,19 @@ async function openWorkout(id){
       (laps.length?'<h3>Splits / laps</h3><div class="split-table">'+laps.map(l=>
         '<div><span>Lap '+Number(l.number||1)+' · '+Number(l.distanceMiles||0).toFixed(2)+' mi</span><strong>'+
         formatTime(Number(l.durationSeconds||0))+'</strong><small>'+escapeHTML(l.source==='approx_mile'?'Approx. mile':'Device lap')+'</small></div>').join('')+'</div>':
-        '<p class="body-copy">No lap splits available for this workout.</p>');
+        '<p class="body-copy">No lap splits available for this workout.</p>')+
+      (apiIsConnected()?'<div class="detail-change"><label>Workout type <select id="detail-type">'+
+        ['Easy','Long','Tempo','Intervals','Race','Recovery'].map(type=>'<option'+(type===w.type?' selected':'')+'>'+type+'</option>').join('')+
+        '</select></label><label>Notes <textarea id="detail-notes" maxlength="300" rows="2">'+escapeHTML(w.notes)+'</textarea></label>'+
+        '<button type="button" class="primary" id="save-detail">Save changes</button></div>':'');
+    if(apiIsConnected()){
+      $('#save-detail').addEventListener('click',async()=>{
+        const button=$('#save-detail');button.disabled=true;
+        try{await updateRemoteWorkout(w.id,{date:w.date,type:$('#detail-type').value,distanceMiles:w.distanceMiles,durationSeconds:w.durationSeconds,notes:$('#detail-notes').value});
+          await context.refreshRemote();$('#activity-dialog').close();context.toast('Workout updated. Race classifications count toward your recorded PRs.');}
+        catch(err){context.toast('Update failed: '+err.message);}finally{button.disabled=false;}
+      });
+    }
   }catch(err){target.textContent='Could not fetch workout: '+err.message;}
 }
 async function handleFiles(event){

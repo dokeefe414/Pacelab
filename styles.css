@@ -36,3 +36,6 @@
 .assistant-answer{border:1px solid #42634c;background:#172b24;color:#e3f3dc;border-radius:13px;padding:21px;margin:24px 0 14px;line-height:1.8;white-space:pre-wrap;min-height:88px}
 @media(max-width:900px){.intelligence-stack{grid-template-columns:1fr}.intelligence-stack .panel:last-child{grid-column:auto}.intro-actions{flex-wrap:wrap}}
 @media(max-width:600px){.detail-meta,.detail-charts{grid-template-columns:1fr}.intelligence-stats{grid-template-columns:1fr 1fr}.mini-column span{font-size:8px}.workout-row .details-btn{padding:5px}.workout-main span{max-width:120px}.intro-actions>*{flex:auto}}
+
+.trend-svg{background:#0f1c27;border:1px solid #314451;border-radius:10px;padding:12px;margin-top:16px}.trend-svg svg{width:100%;max-height:175px}
+.detail-change{border-top:1px solid #334858;margin-top:22px;padding-top:20px;display:grid;gap:12px}.detail-change label{display:block}.detail-change button{justify-self:start}
