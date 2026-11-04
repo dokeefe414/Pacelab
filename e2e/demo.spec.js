@@ -64,3 +64,15 @@ test('account dialog exposes optional privately hosted API address', async({page
   await page.locator('#close-account').click();
   await expect(page.locator('#account-dialog')).toBeHidden();
 });
+
+
+test('performance center shows consistency tiles and workout comparison',async({page})=>{
+  await page.locator('[data-view="insights"]').click();
+  await expect(page.locator('#performance-heatmap .heatmap-day')).toHaveCount(84);
+  await expect(page.locator('#performance-calendar-summary')).toContainText('active days');
+  await page.locator('#workout-compare-a').selectOption({index:1});
+  await page.locator('#workout-compare-b').selectOption({index:2});
+  await expect(page.locator('#workout-compare-result')).toContainText('seconds/mi');
+  await page.locator('#race-event').selectOption('8000');
+  await expect(page.locator('#race-progress-chart')).toContainText('Log at least two Race workouts');
+});
