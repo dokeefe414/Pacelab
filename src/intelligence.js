@@ -212,6 +212,7 @@ async function askTrainingAssistant(event){
   event.preventDefault();
   const input=$('#assistant-question'),button=$('#assistant-submit'),answer=$('#assistant-answer');
   if(!apiIsConnected()){
+    $('#assistant-supporting-workouts').textContent='Local demo: answers use only workouts in this browser.';
     answer.textContent=(context.getUsingSample()?'Synthetic demo · ':'Browser-local data · ')+
       localTrainingAnswer(input.value, advancedStats(context.getWorkouts()));
     $('#assistant-footnote').textContent='Engine: browser-only deterministic statistics. Nothing is uploaded.';
@@ -221,6 +222,12 @@ async function askTrainingAssistant(event){
   try{
     const result=await askAssistant(input.value.trim());
     answer.textContent=result.answer;
+    $('#assistant-supporting-workouts').innerHTML=(result.supportingWorkouts||[]).length?
+      '<h3>Workouts supporting this summary</h3>'+result.supportingWorkouts.map(w=>
+        '<button class="evidence-run" type="button" data-open="'+escapeHTML(w.id)+'">'+
+        '<span>'+escapeHTML(w.date)+' · '+escapeHTML(w.type)+'</span><strong>'+
+        Number(w.distanceMiles).toFixed(2)+' mi</strong></button>').join(''):
+      '<p class="body-copy">No logged workouts available as supporting evidence.</p>';
     $('#assistant-footnote').textContent='Engine: '+result.engine+' · As of '+result.asOf+' · '+result.disclaimer;
   }catch(err){answer.textContent='Unable to analyze workouts: '+err.message;}finally{button.disabled=false;}
 }

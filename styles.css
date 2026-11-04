@@ -72,3 +72,8 @@
 .hr-track{height:11px;background:#293946;border-radius:9px;overflow:hidden}
 .hr-track div{height:100%;border-radius:9px;background:linear-gradient(90deg,#579773,#c1f878)}
 @media(max-width:650px){.detail-hr-panel{padding:12px}.hr-band{grid-template-columns:64px 1fr 47px;gap:7px}}
+
+.assistant-evidence{margin:15px 0 20px;display:grid;gap:8px}
+.evidence-run{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#192a2a;
+  color:#c9e7cb;border:1px solid #38534a;padding:12px 15px;border-radius:9px;text-align:left;font-size:12px}
+.evidence-run:hover{border-color:#b5f36c}.evidence-run strong{color:#b5f36c;white-space:nowrap}
