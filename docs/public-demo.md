@@ -10,6 +10,5 @@ deploying private athlete data or a live server.
 
 The Pages demo starts with **synthetic workouts**. Visitors can use the
 local dashboard, log workouts and calculate formula race equivalents.
-Server-backed FIT/GPX/TCX imports, account login, and the assistant require
-a separately hosted backend and **will not work** on a static-only demo.
+Browser-only deterministic questions can be answered from synthetic or locally logged workouts. Server-backed FIT/GPX/TCX imports, account login, and externally powered LLM explanations require a separately hosted backend and **will not work** on a static-only demo.
 Do not misrepresent the static demo as a public full-stack release.
