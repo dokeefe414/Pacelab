@@ -146,8 +146,7 @@ deploy/                    Deployment setup and security checklist
 
 For a browser-playable **frontend-only** demonstration, follow
 [GitHub Pages setup](docs/public-demo.md) and run the included manual
-deployment workflow. Sample workouts are synthetic; backend accounts and
-FIT uploads require your own hosted API.
+deployment workflow. Sample workouts are synthetic; the browser-only statistics assistant works in demo mode, while backend accounts, FIT uploads and server-side LLM explanations require your own hosted API.
 
 ## Tests and deployment
 
