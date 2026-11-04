@@ -55,3 +55,12 @@ test('mobile navigation opens and shows insights',async({page})=>{
   await page.locator('[data-view="insights"]').click();
   await expect(page.getByRole('heading',{name:/Training insights/i})).toBeVisible();
 });
+
+
+test('account dialog exposes optional privately hosted API address', async({page})=>{
+  await page.getByRole('button',{name:/sign in/i}).first().click();
+  await expect(page.locator('#account-dialog')).toBeVisible();
+  await expect(page.locator('#api-base')).toBeVisible();
+  await page.locator('#close-account').click();
+  await expect(page.locator('#account-dialog')).toBeHidden();
+});

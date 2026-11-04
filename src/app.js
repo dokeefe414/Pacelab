@@ -12,11 +12,13 @@ function persist(){if(apiIsConnected()) throw Error('Account workouts must be sa
 async function refreshRemote(){workouts=(await fetchWorkouts()).map(w=>({...w,...validateWorkout(w)}));usingSample=false;render();}
 function syncMode(){const connected=apiIsConnected();$('#account-button').textContent=connected?'Account: '+apiUser().email:'Sign in / Create account';$('#account-status').textContent=connected?'● Synced to account':'● Local-only workspace';$('#reset-data').hidden=connected;$('#sample-banner').hidden=connected||!usingSample;}
 function showAccountDialog(){
-  if(!apiIsConnected() && window.location.hostname.endsWith('.github.io') && getApiBase()==='/api'){
-    toast('This public preview has no account server. Explore the sample data or connect your own HTTPS PaceLab API.');
-    return;
-  }
-  if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}$('#auth-error').textContent='';$('#api-base').value=getApiBase();$('#account-dialog').showModal();}
+  if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}const staticPreview=window.location.hostname.endsWith('.github.io');
+  const needsApi=staticPreview && getApiBase()==='/api';
+  $('#auth-error').textContent=needsApi?
+    'The public demo does not provide accounts. To sign in, enter a separately hosted HTTPS PaceLab API address below.':
+    '';
+  $('#api-base').value=needsApi?'':getApiBase();
+  $('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
