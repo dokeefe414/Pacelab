@@ -1,5 +1,5 @@
 from tools.verify_fit import verify
-from tests.test_binary_fit_smoke import sample_fit
+from test_binary_fit_smoke import sample_fit
 
 
 def test_private_fit_verification_uses_only_safe_derived_totals(tmp_path):
