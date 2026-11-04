@@ -157,3 +157,24 @@ export async function uploadBulkArchive(file){
   if(!response.ok)throw Error(typeof data?.detail==='string'?data.detail:'ZIP import failed ('+response.status+')');
   return data;
 }
+
+
+/** Revokes every outstanding access token for the signed-in account. */
+export async function signOutEverywhere(){
+  if(!token || !currentUser){logout();return;}
+  try{
+    await request('/auth/logout',{method:'POST'});
+  }finally{
+    // Network errors cannot be assumed to have revoked the token server-side.
+    logout();
+  }
+}
+
+/** Updates password and revokes all tokens; callers must sign in again. */
+export async function changeAccountPassword(currentPassword,newPassword){
+  if(!token || !currentUser)throw Error('Sign in before changing your password');
+  await request('/account/password',{
+    method:'POST',body:JSON.stringify({currentPassword,newPassword}),
+  });
+  logout();
+}

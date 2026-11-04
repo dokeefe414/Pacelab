@@ -106,3 +106,8 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;
   animation-duration:.01ms!important;transition-duration:.01ms!important}}
 :focus-visible{outline:3px solid #c0f58c;outline-offset:3px}
+
+.settings-password{padding:18px 0 24px;margin:12px 0 22px;border-block:1px solid #344957}
+.settings-password h3{font-size:17px;margin:0 0 8px}
+.settings-password form{display:grid;gap:12px;margin-top:12px}
+.settings-password button{justify-self:start}
