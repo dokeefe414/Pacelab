@@ -88,3 +88,38 @@ export function localTrainingAnswer(question, s) {
   }
   return 'Last 7 days: '+s.last7.miles.toFixed(1)+' miles; prior 7 days: '+s.prior7.miles.toFixed(1)+' miles. Last 28 days: '+s.last28.miles.toFixed(1)+' miles across '+s.last28.count+' workouts.';
 }
+
+/**
+ * Pace trace derived from consecutive distance and elapsed observations.
+ * Skips GPS jumps and pauses; the result is a visualization aid, not a
+ * validated running dynamics measure. Up to 500 source samples are stored.
+ */
+export function paceTrace(points) {
+  const valid=(points||[]).filter(p=>Number.isFinite(p.elapsed)&&Number.isFinite(p.distanceMiles))
+    .sort((a,b)=>a.elapsed-b.elapsed);
+  const output=[];
+  for(let i=1;i<valid.length;i++){
+    const prev=valid[i-1],next=valid[i];
+    const minutes=(next.elapsed-prev.elapsed)/60;
+    const miles=next.distanceMiles-prev.distanceMiles;
+    if(minutes<=0 || miles<=.002)continue;
+    const paceSeconds=minutes*60/miles;
+    if(!Number.isFinite(paceSeconds)||paceSeconds<180||paceSeconds>1800)continue;
+    output.push({elapsed:next.elapsed,paceSeconds:Math.round(paceSeconds)});
+  }
+  return output;
+}
+
+/** Equal-duration comparisons that account for incomplete current weeks. */
+export function compareDateWindows(workouts,startA,endA,startB,endB) {
+  const valid=(start,end)=>workouts.filter(w=>w.date>=start&&w.date<=end);
+  const summarize=items=>{
+    const miles=items.reduce((s,w)=>s+w.distanceMiles,0);
+    const seconds=items.reduce((s,w)=>s+w.durationSeconds,0);
+    return {count:items.length,miles:Number(miles.toFixed(2)),
+      seconds,averagePaceSecondsPerMile:miles?Number((seconds/miles).toFixed(1)):null,
+      hardSessions:items.filter(w=>['Race','Tempo','Intervals'].includes(w.type)).length};
+  };
+  if(startA>endA || startB>endB)throw Error('Start dates must be on or before end dates');
+  return {first:summarize(valid(startA,endA)),second:summarize(valid(startB,endB))};
+}
