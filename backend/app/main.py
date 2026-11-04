@@ -3,7 +3,8 @@ import os
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
+from sqlalchemy import select, text as sql_text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -42,6 +43,16 @@ def workout_response(workout: Workout) -> WorkoutResponse:
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "pacelab-api"}
+
+
+@app.get("/api/ready")
+def readiness(db: Session = Depends(get_db)):
+    """Use actual DB query to ensure migrations and connectivity are healthy."""
+    try:
+        db.execute(sql_text("SELECT 1"))
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+    return {"status": "ready", "database": "ok"}
 
 
 @app.post("/api/auth/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
