@@ -61,3 +61,29 @@ def test_real_decoder_accepts_binary_fit_with_pauses_and_laps():
     assert decoded["track"][0]["cadenceSpm"]==160
     assert decoded["track"][0]["powerWatts"]==190
     assert decoded["track"][-1]["elapsed"]==720
+
+
+def test_fit_upload_roundtrip_persists_cadence_power_and_elapsed(client):
+    account=client.post("/api/auth/register",json={
+        "email":"fit-roundtrip@example.com","password":"very-strong-password-123"})
+    assert account.status_code==201, account.text
+    headers={"Authorization":"Bearer "+account.json()["access_token"]}
+    payload=sample_fit()
+    created=client.post("/api/activities/import",headers=headers,
+        files={"file":("synthetic.fit",payload,"application/octet-stream")})
+    assert created.status_code==200,created.text
+    assert created.json()["imported"] is True
+    activity=created.json()["workout"]
+    assert activity["durationSeconds"]==600
+    assert activity["elapsedSeconds"]==720
+    assert activity["avgCadenceSpm"]==164
+    assert activity["avgPowerWatts"]==255
+    detail=client.get("/api/workouts/"+activity["id"],headers=headers)
+    assert detail.status_code==200
+    assert len(detail.json()["laps"])==2
+    assert detail.json()["track"][-1]["elapsed"]==720
+    assert detail.json()["track"][-1]["cadenceSpm"]==170
+    assert detail.json()["track"][-1]["powerWatts"]==270
+    duplicate=client.post("/api/activities/import",headers=headers,
+        files={"file":("synthetic.fit",payload,"application/octet-stream")})
+    assert duplicate.json()["imported"] is False
