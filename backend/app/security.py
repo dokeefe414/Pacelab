@@ -30,18 +30,32 @@ def verify_password(plain: str, hashed: str) -> bool:
     return hashing.verify(plain, hashed)
 
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: str, token_version: int = 0) -> str:
+    """Versioned tokens allow an account to revoke every prior access token."""
     now = datetime.now(timezone.utc)
     return jwt.encode(
-        {"sub": user_id, "iss": ISSUER, "iat": now, "exp": now + timedelta(minutes=TOKEN_LIFETIME_MINUTES)},
+        {"sub": user_id, "iss": ISSUER, "iat": now, "exp": now + timedelta(minutes=TOKEN_LIFETIME_MINUTES),
+         "ver": int(token_version)},
         _SECRET, algorithm=ALGORITHM,
     )
 
 
-def get_subject(token: str) -> str | None:
+def get_claims(token: str) -> dict | None:
     try:
-        data = jwt.decode(token, _SECRET, algorithms=[ALGORITHM], issuer=ISSUER, options={"require": ["sub", "iss", "iat", "exp"]})
-        subject = data.get("sub")
-        return subject if isinstance(subject, str) and subject else None
+        data = jwt.decode(
+            token, _SECRET, algorithms=[ALGORITHM], issuer=ISSUER,
+            options={"require": ["sub", "iss", "iat", "exp", "ver"]},
+        )
+        if (not isinstance(data.get("sub"), str)
+            or not data["sub"]
+            or type(data.get("ver")) is not int
+            or data["ver"] < 0):
+            return None
+        return data
     except InvalidTokenError:
         return None
+
+
+def get_subject(token: str) -> str | None:
+    claims = get_claims(token)
+    return claims["sub"] if claims else None
