@@ -13,7 +13,7 @@ if [[ "$base" != https://* || "$base" == *"@"* ]]; then
 fi
 command -v curl >/dev/null || { echo "curl is required" >&2; exit 1; }
 echo "Checking public HTML..."
-curl -fsS --max-time 15 "$base/" | grep -qi "PaceLab" || { echo "No PaceLab HTML" >&2; exit 1; }
+curl -fsS --max-time 15 "$base/" | grep -i "PaceLab" >/dev/null || { echo "No PaceLab HTML" >&2; exit 1; }
 echo "Checking liveness..."
 curl -fsS --max-time 15 "$base/api/health" |
 python3 -c 'import json,sys; assert json.load(sys.stdin)["status"]=="ok"'
