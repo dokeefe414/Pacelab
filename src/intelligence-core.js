@@ -66,3 +66,25 @@ export function linePath(points,key,width=320,height=120) {
     (12+(p.elapsed-minT)/(maxT-minT||1)*(width-24)).toFixed(1)+','+
     (height-12-(p[key]-minV)/(maxV-minV||1)*(height-24)).toFixed(1)).join(' ');
 }
+
+/** Browser-only factual Q&A, suitable for synthetic demo data. */
+export function localTrainingAnswer(question, s) {
+  const q=String(question).toLowerCase();
+  if(!s.last28.count && !s.prior7.count)return 'No workouts have been logged in this browser yet.';
+  if(/race|best|pr\b/.test(q)){
+    if(!s.personalBests.length)return 'No races at standard event distances are logged in this browser.';
+    return 'Recorded bests: '+s.personalBests.map(r=>r.event+' '+Math.floor(r.seconds/60)+':'+String(Math.round(r.seconds)%60).padStart(2,'0')).join('; ')+'.';
+  }
+  if(/heart|pulse|\bhr\b/.test(q)){
+    return s.avgHR?'Mean of recorded workout-average heart rates (last 28 days): '+Math.round(s.avgHR)+' bpm.':
+      'No recent heart-rate readings are available.';
+  }
+  if(/pace|speed|faster|slower/.test(q)){
+    if(!s.easyPace)return 'No Easy or Recovery workouts were logged in the last 28 days.';
+    return 'Distance-weighted Easy/Recovery pace over 28 days: '+Math.floor(s.easyPace/60)+':'+String(Math.round(s.easyPace)%60).padStart(2,'0')+' per mile. This does not prove a change in race fitness.';
+  }
+  if(/hard|interval|tempo|load|recovery|fatigue/.test(q)){
+    return 'Last 28 days: '+s.hardSessions+' Tempo/Intervals/Race sessions and '+s.weightedMinutes.toFixed(0)+' illustrative weighted minutes. These are not validated fatigue or injury-risk estimates.';
+  }
+  return 'Last 7 days: '+s.last7.miles.toFixed(1)+' miles; prior 7 days: '+s.prior7.miles.toFixed(1)+' miles. Last 28 days: '+s.last28.miles.toFixed(1)+' miles across '+s.last28.count+' workouts.';
+}

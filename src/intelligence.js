@@ -1,6 +1,6 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
-import {advancedStats,routePath,linePath} from './intelligence-core.js';
+import {advancedStats,routePath,linePath,localTrainingAnswer} from './intelligence-core.js';
 import {apiIsConnected,uploadActivity,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
 
 const $=s=>document.querySelector(s);
@@ -60,7 +60,9 @@ export function renderIntelligence(){
     '<p class="body-copy">No races at standard event distances logged yet. Record a workout as Race to track best efforts.</p>';
   $('#assistant-connection').textContent=apiIsConnected()?
     'Ready to analyze your private account data. Responses use only workout aggregates.':
-    'Sign in to ask about your actual training. Demo workouts are not uploaded automatically.';
+    (context.getUsingSample()?
+      'Demo mode: questions use synthetic sample workouts and never leave your browser. Sign in for real account analysis.':
+      'Local mode: answers use workouts stored in your browser. Sign in to use server-backed analysis.');
   $('#fit-import-hint').textContent=apiIsConnected()?
     'Choose .fit, .gpx or .tcx exports — up to 10 MB each; your route samples stay inside your account.':
     'Sign in to import activity files. Local CSV import remains available without an account.';
@@ -178,7 +180,12 @@ async function fillTrainingFeatures(){
 async function askTrainingAssistant(event){
   event.preventDefault();
   const input=$('#assistant-question'),button=$('#assistant-submit'),answer=$('#assistant-answer');
-  if(!apiIsConnected()){answer.textContent='Sign in to use the grounded training assistant.';return;}
+  if(!apiIsConnected()){
+    answer.textContent=(context.getUsingSample()?'Synthetic demo · ':'Browser-local data · ')+
+      localTrainingAnswer(input.value, advancedStats(context.getWorkouts()));
+    $('#assistant-footnote').textContent='Engine: browser-only deterministic statistics. Nothing is uploaded.';
+    return;
+  }
   button.disabled=true;answer.textContent='Checking your actual training statistics…';
   try{
     const result=await askAssistant(input.value.trim());

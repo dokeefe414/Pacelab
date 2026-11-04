@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advancedStats,linePath,routePath} from '../src/intelligence-core.js';
+import {advancedStats,linePath,routePath,localTrainingAnswer} from '../src/intelligence-core.js';
 
 test('last 7 days exclude older runs and calculate weighted load',()=>{
   const data=[
@@ -33,4 +33,10 @@ test('route and time series chart builders handle missing values',()=>{
   assert.match(path,/M.*L/);
   const hr=linePath([{elapsed:0,heartRate:120},{elapsed:30,heartRate:140}],'heartRate');
   assert.match(hr,/M.*L/);
+});
+
+test('browser-only assistant uses recorded stats',()=>{
+  const stats=advancedStats([{date:'2026-11-04',distanceMiles:5,durationSeconds:2400,type:'Easy'}],new Date(2026,10,4));
+  assert.match(localTrainingAnswer('How many miles this week?',stats),/5.0 miles/);
+  assert.match(localTrainingAnswer('Do I have heart rate data?',stats),/No recent heart-rate/);
 });
