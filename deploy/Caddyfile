@@ -1,7 +1,7 @@
 {$PACELAB_DOMAIN} {
     encode gzip zstd
     request_body {
-        max_size 11MB
+        max_size 26MB
     }
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains"
