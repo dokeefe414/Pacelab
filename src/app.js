@@ -10,7 +10,12 @@ function load(){try{const raw=localStorage.getItem(KEY);if(raw!==null){const par
 function persist(){if(apiIsConnected()) throw Error('Account workouts must be saved using the API');localStorage.setItem(KEY,JSON.stringify(workouts));usingSample=false;render();}
 async function refreshRemote(){workouts=(await fetchWorkouts()).map(w=>({...w,...validateWorkout(w)}));usingSample=false;render();}
 function syncMode(){const connected=apiIsConnected();$('#account-button').textContent=connected?'Account: '+apiUser().email:'Sign in / Create account';$('#account-status').textContent=connected?'● Synced to account':'● Local-only workspace';$('#reset-data').hidden=connected;$('#sample-banner').hidden=connected||!usingSample;}
-function showAccountDialog(){if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}$('#auth-error').textContent='';$('#api-base').value=getApiBase();$('#account-dialog').showModal();}
+function showAccountDialog(){
+  if(!apiIsConnected() && window.location.hostname.endsWith('.github.io') && getApiBase()==='/api'){
+    toast('This public preview has no account server. Explore the sample data or connect your own HTTPS PaceLab API.');
+    return;
+  }
+  if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}$('#auth-error').textContent='';$('#api-base').value=getApiBase();$('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
