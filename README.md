@@ -113,6 +113,28 @@ receives the user's question and aggregated metrics, not raw routes, emails,
 workout notes or tokens. Athlete consent and a privacy notice are necessary
 before turning that on for other people.
 
+## One-click browser access — no downloads
+
+**PaceLab can run as a static demo through GitHub Pages.** Once the
+repository's Pages setting is enabled, visitors open the public demo in
+their browser without installing Python, Docker, or any software.
+
+**Publishing status:** The Pages URL is not verified as live yet. The
+expected URL after successful activation is
+`https://dokeefe414.github.io/Pacelab/`.
+
+One-time owner action: open
+[Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages),
+select **GitHub Actions** as the build source, and save. Then go to
+[Actions → Deploy static demo](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml)
+and choose **Run workflow**. After the first successful publication, new
+commits to `main` that change the frontend automatically redeploy it.
+
+This **free browser-only demo** includes sample workouts, local workout logs,
+training charts, deterministic Q&A, and formula race estimates. The demo
+does **not** provide private server accounts, COROS FIT uploads, or a trained
+ML inference API. Those require a separately hosted full-stack service.
+
 ## Public browser demo
 
 A **frontend-only GitHub Pages deployment workflow** is included at
