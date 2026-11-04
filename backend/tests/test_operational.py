@@ -29,3 +29,23 @@ def test_structured_logs_do_not_contain_query_or_auth(client,caplog):
 
 def test_scrub_workout_identifier():
     assert safe_route("/api/workouts/123e4567-e89b-12d3-a456-426614174000")=="/api/workouts/:id"
+
+
+
+def test_database_readiness_fails_without_migrated_tables(client,tmp_path):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from app.db import get_db
+    from app.main import app
+    engine=create_engine("sqlite:///"+str(tmp_path/"unmigrated.sqlite"))
+    def empty_db():
+        with Session(engine) as session:
+            yield session
+    app.dependency_overrides[get_db]=empty_db
+    try:
+        response=client.get("/api/ready")
+        assert response.status_code==503
+        assert response.json()["detail"]=="Database unavailable"
+    finally:
+        app.dependency_overrides.pop(get_db,None)
+        engine.dispose()
