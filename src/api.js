@@ -75,3 +75,7 @@ export function createRemoteWorkout(workout) {
 export function deleteRemoteWorkout(id) {
   return request('/workouts/' + encodeURIComponent(id), {method:'DELETE'});
 }
+
+export function requestMLPrediction(features) {
+  return request('/predict/ml', {method:'POST',body:JSON.stringify(features)});
+}

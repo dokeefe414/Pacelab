@@ -8,6 +8,7 @@
 - Local demo mode with synthetic example runs, CSV import/export, and browser-only storage.
 - Optional account mode: register, sign in, log and delete your own workouts via authenticated API requests. User data is isolated in the database.
 - FastAPI API docs, SQLAlchemy models, Alembic migrations, PostgreSQL Compose configuration and tests.
+- Experimental ML form in the race predictor, connected to the optional trained-model API. Until configured, it explains that the service is unavailable.
 - Model training script on **your real, labeled race-history CSV**. No machine learning model is shipped by default; the ML inference endpoint returns 503 until you configure your own trusted trained model. Reports held-out MAE and empirical interval coverage.
 
 **Caution:** This is an engineering MVP, **not a public production service**. Registration lacks anti-abuse, email verification, hardened browser sessions and rate limiting. The model is experimental and should not be presented as validated or used as medical guidance.

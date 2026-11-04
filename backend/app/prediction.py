@@ -38,4 +38,4 @@ def machine_learning_prediction(features: RaceFeatures):
     row = [[features.eventMeters, features.weeklyMiles4w, features.averageEasyPaceSecondsPerMile, features.hardSessions4w, features.longestRunMiles]]
     estimate = float(bundle["model"].predict(row)[0])
     radius = float(bundle["interval_half_width_seconds"])
-    return {"estimatedSeconds": round(estimate, 2), "lowerSeconds": round(max(0, estimate - radius), 2), "upperSeconds": round(estimate + radius, 2), "method": "random_forest", "experimental": True, "trainedOnSyntheticData": bool(bundle.get("demo", False)), "validation": bundle.get("validation", {}), "warning": "Research-only estimate; reliability depends on quality and coverage of training data."}
+    return {"estimatedSeconds": round(estimate, 2), "lowerSeconds": round(max(0, estimate - radius), 2), "upperSeconds": round(estimate + radius, 2), "method": bundle.get("method", "unknown"), "experimental": True, "trainedOnSyntheticData": bool(bundle.get("demo", False)), "validation": bundle.get("validation", {}), "warning": "Research-only estimate; reliability depends on quality and coverage of training data."}
