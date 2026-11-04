@@ -49,7 +49,9 @@ def health():
 def readiness(db: Session = Depends(get_db)):
     """Use actual DB query to ensure migrations and connectivity are healthy."""
     try:
-        db.execute(sql_text("SELECT 1"))
+        # A live connection without migrated tables is NOT readiness.
+        db.execute(sql_text("SELECT 1 FROM users LIMIT 1"))
+        db.execute(sql_text("SELECT 1 FROM workouts LIMIT 1"))
     except SQLAlchemyError as exc:
         raise HTTPException(status_code=503, detail="Database unavailable") from exc
     return {"status": "ready", "database": "ok"}
