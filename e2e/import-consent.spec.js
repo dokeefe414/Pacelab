@@ -5,6 +5,7 @@ test('COROS import requires positive GPS disclosure acknowledgement',async({page
   await page.addInitScript(()=>{
     localStorage.setItem('pacelab.tour.v1','1');
     sessionStorage.setItem('pacelab.sessionToken.v1','synthetic-token');
+    sessionStorage.setItem('pacelab.sessionApiBase.v1','/api');
   });
   await page.route('**/api/**',async route=>{
     const url=new URL(route.request().url());

@@ -18,6 +18,7 @@ const activity={
 test('signed-in activity details and assistant evidence use actual response fields',async({page})=>{
   await page.addInitScript(()=>{
     sessionStorage.setItem('pacelab.sessionToken.v1','synthetic-test-token');
+    sessionStorage.setItem('pacelab.sessionApiBase.v1','/api');
     localStorage.setItem('pacelab.tour.v1','1');
   });
   await page.route('**/api/**',async route=>{
