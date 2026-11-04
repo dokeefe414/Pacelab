@@ -1,12 +1,17 @@
 # PaceLab — Running Intelligence
 
+## ▶️ [Try PaceLab in your browser](https://dokeefe414.github.io/Pacelab/)
+
+**No downloads or installation needed.** Explore the interactive running dashboard, sample workouts, training analytics, race-equivalence calculator, and local training assistant.
+
+> **Demo publishing status:** GitHub Pages deployment has not yet been confirmed successful. If the link isn't working, see the [deployment workflow](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml). The repository owner may need to enable **Settings → Pages → Source: GitHub Actions**. This is a sample-data demo; private COROS imports and accounts need a separately hosted backend.
+
 **A full-stack running analytics and experimental race-prediction platform.**
 
 Built by Daniel O'Keefe as a software-engineering and AI/ML portfolio project.
 
 **Current release: v0.5 private-beta code.** The public GitHub repository contains the
-application, tests and deployment configuration. **A live hosted full-stack
-service and a verified public Pages demo are not yet activated.** The race
+application, tests and deployment configuration. **A full-stack public server is not currently hosted, and the Pages demo deployment is not yet confirmed live.** The race
 prediction model requires genuine labeled data before any performance claims.
 
 ## What PaceLab does
