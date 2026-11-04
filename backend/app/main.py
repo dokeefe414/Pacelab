@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from .activity_import import ActivityParseError, MAX_FILE_BYTES, parse_activity
 from .analytics import summarize_training
 from .assistant import router as assistant_router
+from .account import router as account_router
+from .security_controls import security_middleware
 from .insights import router as insights_router
 from .training_export import router as training_export_router
 from .db import get_db
@@ -19,9 +21,11 @@ from .prediction import router as prediction_router
 from .schemas import AuthResponse, LoginRequest, PublicUser, RegisterRequest, WorkoutPayload, WorkoutResponse, WorkoutDetailResponse
 from .security import create_access_token, password_hash, verify_password
 
-app = FastAPI(title="PaceLab API", version="0.3.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="PaceLab API", version="0.4.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 origins = [x.strip() for x in os.getenv("PACELAB_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
+app.middleware("http")(security_middleware)
+app.include_router(account_router)
 app.include_router(prediction_router)
 app.include_router(assistant_router)
 app.include_router(insights_router)

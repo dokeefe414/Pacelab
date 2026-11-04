@@ -1,6 +1,6 @@
 # PaceLab 🏃 — Running analytics and race prediction
 
-**PaceLab v0.3** is a full-stack, privacy-aware running analytics platform. Runners can import device activity files, inspect training trends and route traces, ask grounded questions about their recorded workouts, and experiment with race predictions.
+**PaceLab v0.4** is a full-stack, privacy-aware running analytics platform. Runners can import device activity files, inspect training trends and route traces, ask grounded questions about their recorded workouts, and experiment with race predictions.
 
 Built by **Daniel O'Keefe** as a software-engineering and AI/ML portfolio project.
 
