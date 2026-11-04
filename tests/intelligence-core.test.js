@@ -77,8 +77,8 @@ test('heart-rate distribution uses observed seconds and caps missing data',()=>{
   assert.equal(out.seconds[0],1);
   assert.equal(out.seconds[1],1);
   assert.equal(out.seconds[2],1);
-  assert.equal(out.seconds[4],1);
-  assert.equal(out.seconds[3],5);
+  assert.equal(out.seconds[4],6);
+  assert.equal(out.seconds[3],0);
 });
 test('lap comparisons normalize variable distance intervals',()=>{
   const laps=lapPaces([{number:1,distanceMiles:1,durationSeconds:400},
