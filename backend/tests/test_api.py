@@ -70,3 +70,12 @@ def test_postgresql_connection_url_escapes_reserved_password_chars(monkeypatch):
     monkeypatch.setenv("PACELAB_DB_PASSWORD", "strong:password@with#symbols")
     url = database_url()
     assert "strong%3Apassword%40with%23symbols" in url
+
+
+def test_production_registration_is_disabled_by_default(client, monkeypatch):
+    monkeypatch.setenv("PACELAB_ENV", "production")
+    monkeypatch.delenv("PACELAB_PUBLIC_SIGNUP", raising=False)
+    response = client.post("/api/auth/register", json={
+        "email": "private@example.com", "password": "very-strong-password-123"
+    })
+    assert response.status_code == 403

@@ -1,7 +1,7 @@
 """Export race training rows with features drawn only from dates BEFORE each race."""
 import csv
 import io
-from datetime import timedelta
+from datetime import date, timedelta
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from sqlalchemy import select
@@ -19,7 +19,7 @@ def labeled_race_rows(workouts):
     data = sorted(workouts, key=lambda w:(w.date,w.created_at))
     output = []
     for race in data:
-        if race.type != "Race":
+        if race.type != "Race" or race.date > date.today():
             continue
         distance = race.distance_miles * 1609.344
         matches = [d for d in EVENTS.values() if abs(d-distance)/d <= .025]

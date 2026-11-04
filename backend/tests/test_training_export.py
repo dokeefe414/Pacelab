@@ -26,3 +26,10 @@ def test_feature_rows_precede_race():
 def test_few_sessions_not_exported():
     d=date.today()
     assert labeled_race_rows([workout(d,"Race",3.10686,1200,"r")])==[]
+
+
+def test_future_dated_races_do_not_become_training_labels():
+    later=date.today()+timedelta(days=14)
+    records=[workout(later-timedelta(days=i+1),"Easy",5,2400,"e"+str(i)) for i in range(5)]
+    records.append(workout(later,"Race",3.10686,1150,"future-race"))
+    assert labeled_race_rows(records)==[]
