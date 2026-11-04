@@ -56,3 +56,31 @@ def export_race_training_csv(user:User=Depends(current_user), db:Session=Depends
         "Cache-Control": "private, no-store",
         "X-PaceLab-Valid-Race-Rows": str(len(rows)),
     })
+
+
+
+@router.get("/race-readiness")
+def race_data_readiness(user:User=Depends(current_user), db:Session=Depends(get_db)):
+    """Private readiness assessment, never a claim about prediction accuracy."""
+    records=db.scalars(select(Workout).where(Workout.user_id==user.id)).all()
+    rows=labeled_race_rows(records)
+    dates={row["date"] for row in rows}
+    races=[row for row in records if row.type=="Race" and row.date<=date.today()]
+    by_event={}
+    for row in rows:
+        event=str(int(row["event_meters"]))
+        by_event[event]=by_event.get(event,0)+1
+    enough=len(rows)>=60 and len(dates)>=12
+    return {
+        "totalLoggedRaces":len(races),
+        "eligibleLabeledRows":len(rows),
+        "distinctEligibleRaceDates":len(dates),
+        "minimumRowsForExperiment":60,
+        "minimumDistinctDates":12,
+        "additionalRowsNeeded":max(0,60-len(rows)),
+        "eligibleByEventMeters":by_event,
+        "canStartExperimentalTraining":enough,
+        "warning":("Eligible rows are not evidence of predictive accuracy. "
+                   "Trainer also requires usable train/validation/test partitions. "
+                   "Never share athlete records or private GPS without explicit consent."),
+    }
