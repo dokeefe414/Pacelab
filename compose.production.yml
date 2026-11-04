@@ -1,0 +1,59 @@
+# HTTPS beta deployment reference, not an audited public production release.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pacelab
+      POSTGRES_USER: pacelab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Missing database password}
+    volumes:
+      - pacelab_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pacelab -d pacelab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      PACELAB_ENV: production
+      PACELAB_PUBLIC_SIGNUP: "false"
+      PACELAB_SECRET_KEY: ${PACELAB_SECRET_KEY:?Missing signing secret}
+      PACELAB_DATABASE_URL: postgresql+psycopg://pacelab:${POSTGRES_PASSWORD}@db:5432/pacelab
+      PACELAB_CORS_ORIGINS: https://${PACELAB_DOMAIN:?Missing domain}
+      PACELAB_MODEL_PATH: ${PACELAB_MODEL_PATH:-}
+      PACELAB_ASSISTANT_PROVIDER: ${PACELAB_ASSISTANT_PROVIDER:-off}
+      PACELAB_ASSISTANT_MODEL: ${PACELAB_ASSISTANT_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - ./backend/models:/app/models:ro
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PACELAB_DOMAIN: ${PACELAB_DOMAIN:?Missing domain}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+volumes:
+  pacelab_pgdata:
+  caddy_data:
+  caddy_config:
