@@ -64,3 +64,11 @@
 .compare-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}
 .compare-columns>div{display:grid;gap:10px}
 @media(max-width:600px){.compare-columns{grid-template-columns:1fr}}
+
+.detail-hr-panel{margin:18px 0;padding:20px;border-radius:12px}
+.hr-bands{display:grid;gap:13px}
+.hr-band{display:grid;grid-template-columns:72px 1fr 52px;align-items:center;gap:12px;font-size:12px}
+.hr-band span{color:#abc1ca}.hr-band strong{text-align:right;color:#c3f497;font-variant-numeric:tabular-nums}
+.hr-track{height:11px;background:#293946;border-radius:9px;overflow:hidden}
+.hr-track div{height:100%;border-radius:9px;background:linear-gradient(90deg,#579773,#c1f878)}
+@media(max-width:650px){.detail-hr-panel{padding:12px}.hr-band{grid-template-columns:64px 1fr 47px;gap:7px}}

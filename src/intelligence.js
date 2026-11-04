@@ -1,6 +1,6 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
-import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,localTrainingAnswer} from './intelligence-core.js';
+import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
 import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
 
 const $=s=>document.querySelector(s);
@@ -68,6 +68,25 @@ export function renderIntelligence(){
     'Choose FIT/GPX/TCX files (10 MB each) or a COROS bulk ZIP export (25 MB max, 100 activities). GPS remains private to your account.':
     'Sign in to import activity files. Local CSV import remains available without an account.';
 }
+function hrDistributionChart(points){
+  const bands=heartRateBands(points);
+  if(!bands.measuredSeconds)return '<p class="body-copy">No usable heart-rate samples for a duration-weighted distribution.</p>';
+  return '<div class="hr-bands">'+bands.labels.map((name,index)=>{
+    const seconds=bands.seconds[index],percent=(100*seconds/bands.measuredSeconds);
+    return '<div class="hr-band"><span>'+name+' bpm</span>'+
+      '<div class="hr-track"><div style="width:'+percent.toFixed(1)+'%"></div></div>'+
+      '<strong>'+percent.toFixed(1)+'%</strong></div>';
+  }).join('')+'</div><p class="body-copy">Absolute heart-rate bands, not personalized training zones. Sample gaps over five seconds are capped.</p>';
+}
+function lapDetails(laps){
+  const rows=lapPaces(laps);
+  if(!rows.length)return '<p class="body-copy">No device laps or valid split records available.</p>';
+  return '<h3>Device laps & normalized split pace</h3><div class="split-table">'+rows.map(l=>
+    '<div><span>Lap '+l.number+' · '+l.distanceMiles.toFixed(2)+' mi</span>'+
+    '<strong>'+formatTime(l.durationSeconds)+'</strong>'+
+    '<small>'+formatTime(l.paceSecondsPerMile)+'/mi · '+escapeHTML(l.source==='approx_mile'?'Approximate':'Device lap')+'</small></div>'
+  ).join('')+'</div>';
+}
 function chart(title,path,width,height){
   return path?'<div class="detail-chart"><strong>'+title+'</strong><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+title+'"><path d="'+path+'" fill="none" stroke="#b5f36c" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/></svg></div>':'';
 }
@@ -102,21 +121,25 @@ async function openWorkout(id){
     const ascent=Number(w.elevationGainMeters);
     target.innerHTML='<div class="detail-meta">'+
       metric('Distance',distance.toFixed(2)+' mi','Recorded activity')+
-      metric('Duration',formatTime(w.durationSeconds),'Elapsed or timer time')+
+      metric('Timer',formatTime(w.durationSeconds),'Device moving / timer time')+
+      metric('Elapsed',w.elapsedSeconds?formatTime(w.elapsedSeconds):'—','Including recorded pauses')+
       metric('Average pace',formatTime(w.durationSeconds/distance)+'/mi','Elapsed or timer pace')+
       metric('Heart rate',Number.isFinite(avgHeartRate)&&avgHeartRate>0?Math.round(avgHeartRate)+' bpm':'—','Imported, when available')+
       metric('Elevation gain',Number.isFinite(ascent)&&w.elevationGainMeters!==null?ascent.toFixed(0)+' m':'—','Imported, when available')+
+      metric('Cadence',w.avgCadenceSpm?Math.round(w.avgCadenceSpm)+' spm':'—','Average steps per minute')+
+      metric('Power',w.avgPowerWatts?Math.round(w.avgPowerWatts)+' W':'—','Device-reported average')+
+      metric('Elevation loss',w.elevationLossMeters!=null?Math.round(w.elevationLossMeters)+' m':'—','Device-reported or derived')+
       metric('Source',escapeHTML(w.source||'Manual'),escapeHTML(w.date))+'</div>'+
       '<p class="body-copy">'+escapeHTML(w.notes||'No notes')+'</p>'+
       '<div class="detail-charts">'+
         chart('Route trace (schematic; not a map)',routePath(track),320,150)+
         chart('Heart-rate samples',linePath(track,'heartRate'),320,120)+
         chart('Segment pace (derived; GPS gaps filtered)',linePath(paceTrace(track),'paceSeconds'),320,120)+
-        chart('Elevation samples',linePath(track,'elevationMeters'),320,120)+'</div>'+
-      (laps.length?'<h3>Splits / laps</h3><div class="split-table">'+laps.map(l=>
-        '<div><span>Lap '+Number(l.number||1)+' · '+Number(l.distanceMiles||0).toFixed(2)+' mi</span><strong>'+
-        formatTime(Number(l.durationSeconds||0))+'</strong><small>'+escapeHTML(l.source==='approx_mile'?'Approx. mile':'Device lap')+'</small></div>').join('')+'</div>':
-        '<p class="body-copy">No lap splits available for this workout.</p>')+
+        chart('Elevation samples',linePath(track,'elevationMeters'),320,120)+
+        chart('Cadence (steps/minute)',linePath(track,'cadenceSpm'),320,120)+
+        chart('Running power (device watts)',linePath(track,'powerWatts'),320,120)+'</div>'+
+        '<div class="panel detail-hr-panel"><h3>Heart-rate distribution</h3>'+hrDistributionChart(track)+'</div>'+
+      lapDetails(laps)+
       (apiIsConnected()?'<div class="detail-change"><label>Workout type <select id="detail-type">'+
         ['Easy','Long','Tempo','Intervals','Race','Recovery'].map(type=>'<option'+(type===w.type?' selected':'')+'>'+type+'</option>').join('')+
         '</select></label><label>Notes <textarea id="detail-notes" maxlength="300" rows="2">'+escapeHTML(w.notes)+'</textarea></label>'+

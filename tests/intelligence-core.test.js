@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advancedStats,linePath,routePath,paceTrace,compareDateWindows,localTrainingAnswer} from '../src/intelligence-core.js';
+import {advancedStats,linePath,routePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from '../src/intelligence-core.js';
 
 test('last 7 days exclude older runs and calculate weighted load',()=>{
   const data=[
@@ -63,4 +63,27 @@ test('selected period comparisons do not mix workout windows',()=>{
   assert.equal(r.first.miles,4);
   assert.equal(r.second.miles,6);
   assert.equal(r.second.hardSessions,1);
+});
+
+
+test('heart-rate distribution uses observed seconds and caps missing data',()=>{
+  const points=[
+    {elapsed:0,heartRate:110},{elapsed:1,heartRate:120},
+    {elapsed:2,heartRate:150},{elapsed:3,heartRate:180},
+    {elapsed:103,heartRate:200},{elapsed:104,heartRate:null},
+  ];
+  const out=heartRateBands(points);
+  assert.equal(out.measuredSeconds,9);
+  assert.equal(out.seconds[0],1);
+  assert.equal(out.seconds[1],1);
+  assert.equal(out.seconds[2],1);
+  assert.equal(out.seconds[4],1);
+  assert.equal(out.seconds[3],5);
+});
+test('lap comparisons normalize variable distance intervals',()=>{
+  const laps=lapPaces([{number:1,distanceMiles:1,durationSeconds:400},
+    {number:2,distanceMiles:.5,durationSeconds:210}]);
+  assert.equal(laps.length,2);
+  assert.equal(laps[0].paceSecondsPerMile,400);
+  assert.equal(laps[1].paceSecondsPerMile,420);
 });
