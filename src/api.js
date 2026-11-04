@@ -122,3 +122,26 @@ export async function downloadRaceTrainingCSV(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   return response.headers.get('x-pacelab-valid-race-rows');
 }
+
+/** Download the complete account record including private coordinates and laps. */
+export async function downloadAccountData() {
+  if (!token || !currentUser) throw Error('Sign in first');
+  const response=await fetch(getApiBase()+'/account/export',{
+    headers:{Authorization:'Bearer '+token},
+    cache:'no-store',
+  });
+  if(!response.ok)throw Error('Account export unavailable (HTTP '+response.status+')');
+  const blob=await response.blob();
+  const objectURL=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=objectURL;link.download='pacelab-private-export.json';link.click();
+  setTimeout(()=>URL.revokeObjectURL(objectURL),1000);
+}
+/** Destructive server action: password and exact confirmation required. */
+export async function permanentlyDeleteAccount(password) {
+  if (!token || !currentUser) throw Error('Sign in first');
+  return request('/account',{
+    method:'DELETE',
+    body:JSON.stringify({password,confirm:'DELETE MY ACCOUNT'}),
+  });
+}

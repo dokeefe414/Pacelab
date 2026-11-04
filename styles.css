@@ -53,3 +53,10 @@
 .tour-progress-row span:first-child{color:#b5f36c;font-weight:800}.tour-actions{display:flex;align-items:center;gap:10px;margin-top:22px}.tour-actions #tour-skip{margin-right:auto}
 .tour-close{position:absolute;right:18px;top:14px}
 @media(max-width:720px){.portfolio-ribbon{flex-wrap:wrap}.portfolio-ribbon span{min-width:80%}.hero-tags span{font-size:8px}.tour-body{padding:22px}.tour-body h2{font-size:27px}}
+
+.settings-dialog{width:min(530px,calc(100vw - 22px))}
+.settings-actions{display:flex;flex-wrap:wrap;gap:10px;margin:17px 0 25px}
+.settings-danger{border-top:1px solid #4b3639;padding-top:22px}.settings-danger h3{color:#f2acac;margin:0 0 12px;font:700 18px 'Space Grotesk'}
+.settings-danger form{display:grid;gap:14px}
+.danger-button{color:#ffe0e0;background:#5b262f;border:1px solid #9c4b55;border-radius:9px;padding:13px 15px;font-size:12px;font-weight:800;text-align:center}
+.danger-button:hover{background:#71303a}

@@ -1,7 +1,7 @@
 import {initTour} from './tour.js';
 import {KEY,parseTime,formatTime,predictRace,validateWorkout,paceSeconds,lastWeeks,summarize,toCSV,parseCSV,sampleWorkouts} from './core.js';
 import {initIntelligence,renderIntelligence} from './intelligence.js';
-import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction} from './api.js';
+import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction,downloadAccountData,permanentlyDeleteAccount} from './api.js';
 const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
 let workouts=[];let usingSample=false;let currentView='dashboard';
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -10,7 +10,7 @@ function load(){try{const raw=localStorage.getItem(KEY);if(raw!==null){const par
 function persist(){if(apiIsConnected()) throw Error('Account workouts must be saved using the API');localStorage.setItem(KEY,JSON.stringify(workouts));usingSample=false;render();}
 async function refreshRemote(){workouts=(await fetchWorkouts()).map(w=>({...w,...validateWorkout(w)}));usingSample=false;render();}
 function syncMode(){const connected=apiIsConnected();$('#account-button').textContent=connected?'Account: '+apiUser().email:'Sign in / Create account';$('#account-status').textContent=connected?'● Synced to account':'● Local-only workspace';$('#reset-data').hidden=connected;$('#sample-banner').hidden=connected||!usingSample;}
-function showAccountDialog(){if(apiIsConnected()){if(confirm('Sign out and return to your local workouts?')){logout();load();render();toast('Signed out of account.');}return;}$('#auth-error').textContent='';$('#api-base').value=getApiBase();$('#account-dialog').showModal();}
+function showAccountDialog(){if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}$('#auth-error').textContent='';$('#api-base').value=getApiBase();$('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
@@ -37,6 +37,26 @@ $('#reset-data').addEventListener('click',()=>{if(apiIsConnected()){toast('Sign 
 $('#dismiss-banner').addEventListener('click',()=>$('#sample-banner').hidden=true);
 $('#account-button').addEventListener('click',showAccountDialog);
 $('#close-account').addEventListener('click',()=>$('#account-dialog').close());
+$('#close-settings').addEventListener('click',()=>$('#account-settings-dialog').close());
+$('#download-account').addEventListener('click',async ()=>{
+  try{await downloadAccountData();toast('Private account export downloaded. Store it securely.');}
+  catch(err){toast('Export failed: '+err.message);}
+});
+$('#signout-account').addEventListener('click',()=>{
+  logout();$('#account-settings-dialog').close();load();render();toast('Signed out of account.');
+});
+$('#delete-account-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const btn=$('#delete-account-submit');btn.disabled=true;
+  $('#account-delete-result').textContent='';
+  try{
+    if(!confirm('Permanently delete this account, all workouts, GPS tracks and laps? This cannot be undone.'))return;
+    await permanentlyDeleteAccount($('#delete-password').value);
+    logout();$('#account-settings-dialog').close();load();render();
+    toast('Account and server workout data permanently deleted.');
+    $('#delete-password').value='';
+  }catch(err){$('#account-delete-result').textContent=err.message;}finally{btn.disabled=false;}
+});
 $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#account-submit');btn.disabled=true;$('#auth-error').textContent='';try{setApiBase($('#api-base').value);const action=$('input[name="auth-action"]:checked').value;await authenticate(action,$('#auth-email').value,$('#auth-password').value);try{await refreshRemote();}catch(err){logout();throw err;}$('#account-dialog').close();$('#auth-password').value='';toast('Connected to your private workout account.');}catch(err){$('#auth-error').textContent=err.message;}finally{btn.disabled=false;}});
 initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample});
 initTour(nav);
