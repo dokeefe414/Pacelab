@@ -23,7 +23,7 @@ from .prediction import router as prediction_router
 from .schemas import AuthResponse, LoginRequest, PublicUser, RegisterRequest, WorkoutPayload, WorkoutResponse, WorkoutDetailResponse
 from .security import create_access_token, password_hash, verify_password
 
-app = FastAPI(title="PaceLab API", version="0.4.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="PaceLab API", version="0.5.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 origins = [x.strip() for x in os.getenv("PACELAB_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 app.middleware("http")(security_middleware)
@@ -36,7 +36,7 @@ app.include_router(training_export_router)
 
 
 def workout_response(workout: Workout) -> WorkoutResponse:
-    return WorkoutResponse(id=workout.id, date=workout.date, type=workout.type, distanceMiles=workout.distance_miles, durationSeconds=workout.duration_seconds, notes=workout.notes, source=workout.source, startTime=workout.start_time, avgHeartRate=workout.avg_heart_rate, elevationGainMeters=workout.elevation_gain_meters)
+    return WorkoutResponse(id=workout.id, date=workout.date, type=workout.type, distanceMiles=workout.distance_miles, durationSeconds=workout.duration_seconds, notes=workout.notes, source=workout.source, startTime=workout.start_time, avgHeartRate=workout.avg_heart_rate, elevationGainMeters=workout.elevation_gain_meters, elevationLossMeters=workout.elevation_loss_meters, elapsedSeconds=workout.elapsed_seconds, maxHeartRate=workout.max_heart_rate, avgCadenceSpm=workout.avg_cadence_spm, avgPowerWatts=workout.avg_power_watts)
 
 
 @app.get("/api/health")

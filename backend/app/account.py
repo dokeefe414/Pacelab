@@ -29,6 +29,9 @@ def serialize_activity(workout: Workout):
         "startTime": workout.start_time.isoformat() if workout.start_time else None,
         "source": workout.source, "avgHeartRate": workout.avg_heart_rate,
         "elevationGainMeters": workout.elevation_gain_meters,
+        "elevationLossMeters": workout.elevation_loss_meters,
+        "elapsedSeconds": workout.elapsed_seconds, "maxHeartRate": workout.max_heart_rate,
+        "avgCadenceSpm": workout.avg_cadence_spm, "avgPowerWatts": workout.avg_power_watts,
         "laps": workout.laps_json or [], "track": workout.track_json or [],
     }
 

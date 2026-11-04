@@ -53,6 +53,11 @@ class WorkoutResponse(WorkoutPayload):
     startTime: datetime | None = None
     avgHeartRate: int | None = None
     elevationGainMeters: float | None = None
+    elevationLossMeters: float | None = None
+    elapsedSeconds: int | None = None
+    maxHeartRate: int | None = None
+    avgCadenceSpm: float | None = None
+    avgPowerWatts: float | None = None
 
 
 class WorkoutDetailResponse(WorkoutResponse):
