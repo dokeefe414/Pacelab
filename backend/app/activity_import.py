@@ -120,7 +120,7 @@ def _build(points, *, distance_meters=None, duration_seconds=None, start=None, h
         up = 0
         prev_elev = None
         for p in points:
-            elevation = p.get("elevationMeters")
+            elevation = _fit_elevation(p.get("elevationMeters"))
             if elevation is not None and prev_elev is not None and elevation > prev_elev:
                 up += elevation-prev_elev
             if elevation is not None:
@@ -137,8 +137,8 @@ def _build(points, *, distance_meters=None, duration_seconds=None, start=None, h
         track.append({
             "elapsed": round(max(0, (point_time-first).total_seconds()), 1) if point_time else None,
             "distanceMiles": round(p["distanceMeters"]*MILES_PER_METER, 4) if p.get("distanceMeters") is not None else None,
-            "heartRate": p.get("heartRate"),
-            "elevationMeters": round(p["elevationMeters"], 1) if p.get("elevationMeters") is not None else None,
+            "heartRate": _fit_heart_rate(p.get("heartRate")),
+            "elevationMeters": round(p["elevationMeters"], 1) if _fit_elevation(p.get("elevationMeters")) is not None else None,
             "lat": round(p["lat"], 6) if p.get("lat") is not None else None,
             "lon": round(p["lon"], 6) if p.get("lon") is not None else None,
         })
@@ -235,8 +235,28 @@ def _fit_get(message, field):
 
 
 def _semicircles(value):
+    """Default fitdecode processor returns raw FIT semicircles, not degrees."""
     number = _numeric(value)
-    return number * (180.0 / (2**31)) if number is not None else None
+    if number is None or number == 0x7fffffff:
+        return None
+    return number * (180.0 / (2**31))
+
+
+def _fit_heart_rate(value):
+    """FIT uint8 255 is missing, not a 255 bpm reading."""
+    bpm = _numeric(value)
+    return round(bpm) if bpm is not None and 30 <= bpm <= 230 else None
+
+
+def _fit_elevation(value):
+    """Drop invalid/unreasonable altitude readings before plotting or ascent."""
+    meters = _numeric(value)
+    return meters if meters is not None and -500 <= meters <= 9000 else None
+
+
+def _fit_distance(value):
+    meters = _numeric(value)
+    return meters if meters is not None and 0 <= meters <= 321868.8 else None
 
 
 def parse_fit(contents):
@@ -261,9 +281,9 @@ def parse_fit(contents):
                     lat,lon = _coordinates(_semicircles(_fit_get(frame,"position_lat")), _semicircles(_fit_get(frame,"position_long")))
                     points.append({
                         "time": _time(_fit_get(frame,"timestamp")), "lat":lat, "lon":lon,
-                        "distanceMeters":_numeric(_fit_get(frame,"distance")),
-                        "heartRate":_numeric(_fit_get(frame,"heart_rate")),
-                        "elevationMeters":_numeric(_fit_get(frame,"enhanced_altitude")) if _fit_get(frame,"enhanced_altitude") is not None else _numeric(_fit_get(frame,"altitude")),
+                        "distanceMeters":_fit_distance(_fit_get(frame,"distance")),
+                        "heartRate":_fit_heart_rate(_fit_get(frame,"heart_rate")),
+                        "elevationMeters":_fit_elevation(_fit_get(frame,"enhanced_altitude")) if _fit_get(frame,"enhanced_altitude") is not None else _fit_elevation(_fit_get(frame,"altitude")),
                     })
     except ActivityParseError:
         raise
@@ -276,9 +296,9 @@ def parse_fit(contents):
         raise ActivityParseError("Only running activities can be imported")
     start = _time(_fit_get(session,"start_time"))
     duration = _numeric(_fit_get(session,"total_timer_time")) or _numeric(_fit_get(session,"total_elapsed_time"))
-    distance = _numeric(_fit_get(session,"total_distance"))
+    distance = _fit_distance(_fit_get(session,"total_distance"))
     ascent = _numeric(_fit_get(session,"total_ascent"))
-    hr = _numeric(_fit_get(session,"avg_heart_rate"))
+    hr = _fit_heart_rate(_fit_get(session,"avg_heart_rate"))
     return _build(points, source="fit", start=start, duration_seconds=duration, distance_meters=distance,
                   heart_rate=hr, elevation_gain=ascent, laps=device_laps)
 
