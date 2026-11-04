@@ -1,7 +1,7 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
-import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
+import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV,fetchRaceDataReadiness} from './api.js';
 
 const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,6 +12,7 @@ export function initIntelligence(options){
   $('#close-activity').addEventListener('click',()=>$('#activity-dialog').close());
   $('#load-race-baseline').addEventListener('click',loadRaceBaseline);
   $('#fill-ml-features').addEventListener('click',fillTrainingFeatures);
+  $('#check-race-readiness').addEventListener('click',checkRaceDataReadiness);
   $('#download-race-data').addEventListener('click',async ()=>{
     const output=$('#training-feature-status');
     try{
@@ -283,4 +284,29 @@ function compareTrainingPeriods(event){
       '<p class="body-copy"><strong>'+Math.abs(delta).toFixed(1)+' miles '+(delta>=0?'more':'fewer')+
       '</strong> in the second selected period. Select equal-length windows for fair volume comparisons. Pace is across mixed workouts and terrain.</p>';
   }catch(err){output.textContent=err.message;}
+}
+
+
+async function checkRaceDataReadiness(){
+  const output=$('#race-readiness-status');
+  if(!apiIsConnected()){
+    output.textContent='Sign into your private account to check your recorded race training history.';
+    return;
+  }
+  output.textContent='Checking real labeled race history…';
+  try{
+    const info=await fetchRaceDataReadiness();
+    const count=info.eligibleLabeledRows;
+    const byEvent=Object.entries(info.eligibleByEventMeters||{}).map(
+      ([distance,n])=>distance+'m: '+n).join(', ')||'none';
+    output.textContent=count+' of '+info.minimumRowsForExperiment+
+      ' eligible labeled race rows across '+info.distinctEligibleRaceDates+
+      ' distinct dates (minimum '+info.minimumDistinctDates+'). '+
+      info.additionalRowsNeeded+' additional eligible races needed to reach the row threshold. '+
+      'Eligible events: '+byEvent+'. '+
+      (info.canStartExperimentalTraining?
+        'Enough rows for an experiment; this is NOT a validation of forecast accuracy. ':
+        'Model training should not begin with this history alone. ')+
+      info.warning;
+  }catch(err){output.textContent='Unable to assess race history: '+err.message;}
 }

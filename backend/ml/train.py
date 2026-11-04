@@ -100,6 +100,8 @@ def train(csv_path, output_path):
                 "mae_seconds":round(float(np.mean(np.abs(test_y[indices]-predictions[indices]))),2),
             }
     backtest=chronological_backtest(rows)
+    from .athlete_groups import athlete_disjoint_evaluation
+    athlete_evaluation=athlete_disjoint_evaluation(csv_path)
     # Permutation importance is estimated on the validation cohort only.
     # It is model-specific association, not a causal explanation.
     importances=permutation_importance(chosen,val_x,val_y,
@@ -131,6 +133,7 @@ def train(csv_path, output_path):
         "interval_half_width_seconds":round(half_width,2),
         "test_per_event":events,
         "rolling_backtest":backtest,
+        "athlete_disjoint_evaluation":athlete_evaluation,
         "limitations":[
             "Chronological partitions reduce but do not eliminate distribution shift.",
             "Single-athlete data may not generalize to other runners.",

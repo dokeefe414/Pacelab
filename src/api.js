@@ -181,3 +181,7 @@ export async function changeAccountPassword(currentPassword,newPassword){
   });
   logout();
 }
+
+export function fetchRaceDataReadiness(){
+  return request('/exports/race-readiness');
+}
