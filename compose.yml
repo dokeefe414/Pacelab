@@ -17,7 +17,10 @@ services:
     environment:
       PACELAB_ENV: development
       PACELAB_SECRET_KEY: ${PACELAB_SECRET_KEY:?Set PACELAB_SECRET_KEY in .env}
-      PACELAB_DATABASE_URL: postgresql+psycopg://pacelab:${POSTGRES_PASSWORD}@db:5432/pacelab
+      PACELAB_DB_HOST: db
+      PACELAB_DB_USER: pacelab
+      PACELAB_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PACELAB_DB_NAME: pacelab
       PACELAB_CORS_ORIGINS: http://localhost:8080
       PACELAB_MODEL_PATH: ${PACELAB_MODEL_PATH:-}
       PACELAB_ASSISTANT_PROVIDER: ${PACELAB_ASSISTANT_PROVIDER:-off}

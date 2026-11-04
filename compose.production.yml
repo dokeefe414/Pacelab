@@ -21,7 +21,10 @@ services:
       PACELAB_ENV: production
       PACELAB_PUBLIC_SIGNUP: "false"
       PACELAB_SECRET_KEY: ${PACELAB_SECRET_KEY:?Missing signing secret}
-      PACELAB_DATABASE_URL: postgresql+psycopg://pacelab:${POSTGRES_PASSWORD}@db:5432/pacelab
+      PACELAB_DB_HOST: db
+      PACELAB_DB_USER: pacelab
+      PACELAB_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PACELAB_DB_NAME: pacelab
       PACELAB_CORS_ORIGINS: https://${PACELAB_DOMAIN:?Missing domain}
       PACELAB_MODEL_PATH: ${PACELAB_MODEL_PATH:-}
       PACELAB_ASSISTANT_PROVIDER: ${PACELAB_ASSISTANT_PROVIDER:-off}

@@ -61,3 +61,12 @@ def test_race_export_requires_auth_and_returns_header(client):
     assert response.status_code == 200
     assert response.headers["x-pacelab-valid-race-rows"] == "0"
     assert response.text.startswith("date,event_meters,weekly_miles_4w,")
+
+
+def test_postgresql_connection_url_escapes_reserved_password_chars(monkeypatch):
+    from app.db import database_url
+    monkeypatch.delenv("PACELAB_DATABASE_URL", raising=False)
+    monkeypatch.setenv("PACELAB_DB_HOST", "db")
+    monkeypatch.setenv("PACELAB_DB_PASSWORD", "strong:password@with#symbols")
+    url = database_url()
+    assert "strong%3Apassword%40with%23symbols" in url
