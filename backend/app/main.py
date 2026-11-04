@@ -8,6 +8,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .activity_import import ActivityParseError, MAX_FILE_BYTES, parse_activity
+from .import_service import persist_activity
+from .bulk_import import router as bulk_router
 from .analytics import summarize_training
 from .assistant import router as assistant_router
 from .account import router as account_router
@@ -26,6 +28,7 @@ origins = [x.strip() for x in os.getenv("PACELAB_CORS_ORIGINS", "http://localhos
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 app.middleware("http")(security_middleware)
 app.include_router(account_router)
+app.include_router(bulk_router)
 app.include_router(prediction_router)
 app.include_router(assistant_router)
 app.include_router(insights_router)
@@ -144,48 +147,4 @@ async def upload_activity(
     finally:
         await file.close()
 
-    existing = db.scalar(select(Workout).where(
-        Workout.user_id == user.id, Workout.source_hash == activity["sourceHash"]
-    ))
-    if existing:
-        return {"imported": False, "reason": "same-file-hash", "workout": workout_response(existing)}
-
-    # Cross-format duplicate check (FIT/TCX/GPX exports of the same run).
-    # Start timestamps and distance/duration are required to avoid mistakenly
-    # collapsing two distinct workouts recorded on the same day.
-    candidates = db.scalars(select(Workout).where(
-        Workout.user_id == user.id, Workout.date == activity["date"],
-        Workout.start_time.is_not(None),
-    )).all()
-    for previous in candidates:
-        start = previous.start_time
-        if start.tzinfo is None:
-            from datetime import timezone
-            start = start.replace(tzinfo=timezone.utc)
-        if (abs((start - activity["startTime"]).total_seconds()) <= 60
-                and abs(previous.distance_miles - activity["distanceMiles"]) <= 0.08
-                and abs(previous.duration_seconds - activity["durationSeconds"]) <= 45):
-            return {"imported": False, "reason": "matching-activity", "workout": workout_response(previous)}
-
-    workout = Workout(
-        user_id=user.id, date=activity["date"], start_time=activity["startTime"],
-        type=activity["type"], distance_miles=activity["distanceMiles"],
-        duration_seconds=activity["durationSeconds"], notes=activity["notes"],
-        source=activity["source"], source_hash=activity["sourceHash"],
-        avg_heart_rate=activity["avgHeartRate"],
-        elevation_gain_meters=activity["elevationGainMeters"],
-        laps_json=activity["laps"], track_json=activity["track"],
-    )
-    db.add(workout)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        existing = db.scalar(select(Workout).where(
-            Workout.user_id == user.id, Workout.source_hash == activity["sourceHash"]
-        ))
-        if existing:
-            return {"imported": False, "reason": "same-file-hash", "workout": workout_response(existing)}
-        raise HTTPException(409, "Could not import activity")
-    db.refresh(workout)
-    return {"imported": True, "workout": workout_response(workout)}
+    return persist_activity(activity, user, db)
