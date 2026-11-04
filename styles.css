@@ -3,3 +3,36 @@
 
 /* Authenticated workspace additions */
 .auth-choice{display:flex;gap:22px;padding:9px 0 22px}.auth-choice label{display:flex;align-items:center;gap:6px}.auth-choice input{accent-color:#b5f36c}.auth-choice input[type="radio"]{width:auto;margin:0}#account-dialog label:not(.auth-choice label){display:block;margin-bottom:16px}#account-dialog p{margin:0 0 14px}#account-button{max-width:260px;overflow:hidden;text-overflow:ellipsis}#reset-data[hidden]{display:none}@media(max-width:640px){#account-button{font-size:11px;padding:9px;max-width:140px}.top-actions .primary{font-size:11px;padding:9px}.top-actions{gap:5px}}
+
+/* PaceLab v0.3 athlete intelligence */
+.details-btn{border:1px solid #3f5c49;border-radius:7px;background:#203629;color:#c0f58b;padding:7px 10px;font-size:11px;font-weight:800;white-space:nowrap}
+.details-btn:hover{background:#2a4931}
+.activity-import-info{font-size:12px;color:#8fadb5;padding:0 0 16px;line-height:1.75}
+#fit-import-status{color:#c5edac}
+.intelligence-stack{margin-top:18px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:17px}
+.intelligence-stack .panel:last-child{grid-column:1/-1}
+.intelligence-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.intelligence-metric{background:#0d1823;border:1px solid #2f4252;border-radius:11px;padding:14px}
+.intelligence-metric span,.intelligence-metric small{display:block;color:#8fa2b3;font-size:11px}
+.intelligence-metric strong{display:block;font:700 23px 'Space Grotesk',sans-serif;color:#b5f36c;margin:9px 0 5px}
+.mini-bars{height:178px;display:flex;align-items:stretch;gap:8px}
+.mini-column{flex:1;min-width:0;display:flex;align-items:center;flex-direction:column;justify-content:flex-end;height:100%;border-bottom:1px solid #4d5b68}
+.mini-column>div{width:100%;max-width:37px;background:linear-gradient(180deg,#b5f36c,#50896c);border-radius:5px 5px 0 0}
+.mini-column span{font-size:9px;white-space:nowrap;color:#8a9ead;padding-top:8px;transform:translateY(17px)}
+#load-chart{padding-bottom:26px}
+.pr-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px 0;border-bottom:1px solid #263744}
+.pr-row span{font-weight:800;font-size:13px}.pr-row strong{font-family:'Space Grotesk',sans-serif;color:#b5f36c}.pr-row small{color:#92a5b1}
+.activity-dialog{width:min(850px,calc(100vw - 22px));max-height:88vh;overflow:auto}
+.detail-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.detail-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.detail-chart{background:#0e1b27;padding:13px;border:1px solid #2d4450;border-radius:12px}
+.detail-chart strong{display:block;font-size:12px;margin-bottom:8px}.detail-chart svg{display:block;max-width:100%;height:auto}
+.split-table>div{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #243648;padding:12px 4px;font-size:12px}
+.split-table small{color:#829eb0}.split-table strong{color:#b5f36c}
+.assistant-panel{max-width:920px}.assistant-panel form{display:flex;flex-direction:column;gap:14px}
+.assistant-panel textarea{width:100%;min-height:92px}
+.assistant-panel form button{align-self:flex-start}
+.question-chips{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.assistant-answer{border:1px solid #42634c;background:#172b24;color:#e3f3dc;border-radius:13px;padding:21px;margin:24px 0 14px;line-height:1.8;white-space:pre-wrap;min-height:88px}
+@media(max-width:900px){.intelligence-stack{grid-template-columns:1fr}.intelligence-stack .panel:last-child{grid-column:auto}.intro-actions{flex-wrap:wrap}}
+@media(max-width:600px){.detail-meta,.detail-charts{grid-template-columns:1fr}.intelligence-stats{grid-template-columns:1fr 1fr}.mini-column span{font-size:8px}.workout-row .details-btn{padding:5px}.workout-main span{max-width:120px}.intro-actions>*{flex:auto}}

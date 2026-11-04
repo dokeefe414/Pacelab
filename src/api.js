@@ -79,3 +79,24 @@ export function deleteRemoteWorkout(id) {
 export function requestMLPrediction(features) {
   return request('/predict/ml', {method:'POST',body:JSON.stringify(features)});
 }
+
+export function fetchWorkoutDetail(id) {return request('/workouts/' + encodeURIComponent(id));}
+export function fetchInsightsSummary() {return request('/insights/summary');}
+export function askAssistant(question) {return request('/assistant/ask', {method:'POST',body:JSON.stringify({question})});}
+export function recordedRacePrediction(targetMeters) {return request('/predict/history?targetMeters=' + encodeURIComponent(targetMeters));}
+export function fetchRaceFeatures(eventMeters) {return request('/predict/features?eventMeters=' + encodeURIComponent(eventMeters));}
+export async function uploadActivity(file) {
+  if (!token || !currentUser) throw Error('Sign in before importing activity files.');
+  const body = new FormData();
+  body.append('file', file, file.name);
+  const response = await fetch(getApiBase() + '/activities/import', {
+    method:'POST', headers:{Authorization:'Bearer ' + token}, body,
+  });
+  let data;
+  try {data=await response.json();} catch {throw Error('API returned a non-JSON response');}
+  if(!response.ok){
+    if(response.status===401)logout();
+    throw Error(typeof data.detail==='string'?data.detail:'Upload failed (HTTP '+response.status+')');
+  }
+  return data;
+}
