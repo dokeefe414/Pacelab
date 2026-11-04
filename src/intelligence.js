@@ -1,7 +1,7 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {advancedStats,routePath,linePath} from './intelligence-core.js';
-import {apiIsConnected,uploadActivity,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures} from './api.js';
+import {apiIsConnected,uploadActivity,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
 
 const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,6 +12,13 @@ export function initIntelligence(options){
   $('#close-activity').addEventListener('click',()=>$('#activity-dialog').close());
   $('#load-race-baseline').addEventListener('click',loadRaceBaseline);
   $('#fill-ml-features').addEventListener('click',fillTrainingFeatures);
+  $('#download-race-data').addEventListener('click',async ()=>{
+    const output=$('#training-feature-status');
+    try{
+      const count=await downloadRaceTrainingCSV();
+      output.textContent='Exported '+count+' labeled race rows. The ML experiment currently requires at least 60 real labeled race results for training.';
+    }catch(err){output.textContent=err.message;}
+  });
   $('#assistant-form').addEventListener('submit',askTrainingAssistant);
   document.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',()=>{
     $('#assistant-question').value=b.dataset.ask;

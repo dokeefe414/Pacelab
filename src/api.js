@@ -107,3 +107,18 @@ export function updateRemoteWorkout(id, workout) {
     method:'PUT',body:JSON.stringify({date,type,distanceMiles,durationSeconds,notes}),
   });
 }
+
+export async function downloadRaceTrainingCSV(){
+  if(!token || !currentUser) throw Error('Sign in to export labeled race rows.');
+  const response=await fetch(getApiBase()+'/exports/race-training.csv',{headers:{Authorization:'Bearer '+token}});
+  if(!response.ok){
+    if(response.status===401)logout();
+    throw Error('Race training export failed (HTTP '+response.status+')');
+  }
+  const blob=await response.blob();
+  const url=URL.createObjectURL(blob);
+  const anchor=document.createElement('a');
+  anchor.href=url;anchor.download='pacelab-race-training.csv';anchor.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  return response.headers.get('x-pacelab-valid-race-rows');
+}

@@ -11,6 +11,7 @@ from .activity_import import ActivityParseError, MAX_FILE_BYTES, parse_activity
 from .analytics import summarize_training
 from .assistant import router as assistant_router
 from .insights import router as insights_router
+from .training_export import router as training_export_router
 from .db import get_db
 from .dependencies import current_user
 from .models import User, Workout
@@ -24,6 +25,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=Fals
 app.include_router(prediction_router)
 app.include_router(assistant_router)
 app.include_router(insights_router)
+app.include_router(training_export_router)
 
 
 def workout_response(workout: Workout) -> WorkoutResponse:
@@ -37,6 +39,8 @@ def health():
 
 @app.post("/api/auth/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    if os.getenv('PACELAB_ENV', 'development').lower() == 'production' and os.getenv('PACELAB_PUBLIC_SIGNUP', 'false').lower() != 'true':
+        raise HTTPException(403, 'Public registration is disabled; contact the server operator')
     user = User(email=str(data.email), password_hash=password_hash(data.password))
     db.add(user)
     try:

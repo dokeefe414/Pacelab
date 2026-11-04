@@ -52,3 +52,12 @@ def test_riegel_and_model_unavailable(client, monkeypatch):
     monkeypatch.delenv("PACELAB_MODEL_PATH", raising=False)
     ml = client.post("/api/predict/ml", json={"eventMeters":5000, "weeklyMiles4w":40, "averageEasyPaceSecondsPerMile":480, "hardSessions4w":5, "longestRunMiles":12})
     assert ml.status_code == 503
+
+
+def test_race_export_requires_auth_and_returns_header(client):
+    assert client.get("/api/exports/race-training.csv").status_code == 401
+    auth = register(client, "race-csv@example.com")
+    response = client.get("/api/exports/race-training.csv", headers=auth)
+    assert response.status_code == 200
+    assert response.headers["x-pacelab-valid-race-rows"] == "0"
+    assert response.text.startswith("date,event_meters,weekly_miles_4w,")
