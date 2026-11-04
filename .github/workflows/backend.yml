@@ -25,6 +25,8 @@ jobs:
         run: |
           bash -n deploy/backup-postgres.sh
           bash -n deploy/test-restore-postgres.sh
+          bash -n deploy/preflight.sh
+          bash -n deploy/verify-public.sh
       - name: Validate local and HTTPS Docker Compose configurations
         working-directory: .
         env:
