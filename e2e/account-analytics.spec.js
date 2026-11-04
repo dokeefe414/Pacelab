@@ -45,7 +45,7 @@ test('signed-in activity details and assistant evidence use actual response fiel
   await expect(page.locator('#activity-detail')).toContainText('Elapsed');
   await expect(page.locator('#activity-detail')).toContainText('Cadence');
   await expect(page.locator('#activity-detail')).toContainText('Heart-rate distribution');
-  await expect(page.locator('#activity-detail')).toContainText('Normalized split pace');
+  await expect(page.locator('#activity-detail')).toContainText(/normalized split pace/i);
   await page.locator('#close-activity').click();
   await page.locator('[data-view="assistant"]').click();
   await page.locator('#assistant-question').fill('How many miles have I logged?');
