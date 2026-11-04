@@ -77,3 +77,5 @@
 .evidence-run{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#192a2a;
   color:#c9e7cb;border:1px solid #38534a;padding:12px 15px;border-radius:9px;text-align:left;font-size:12px}
 .evidence-run:hover{border-color:#b5f36c}.evidence-run strong{color:#b5f36c;white-space:nowrap}
+
+.portfolio-ribbon[hidden]{display:none}
