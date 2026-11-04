@@ -1,6 +1,6 @@
 {
   "name": "pacelab",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "Full-stack, privacy-aware running analytics with a public synthetic demo and experimental ML evaluation",
