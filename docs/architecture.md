@@ -43,7 +43,7 @@ encode special characters in passwords.
 - Short-lived JWT bearer access token, tab-scoped session storage on web.
 - Every account-specific endpoint derives the owner from verified token.
 - GET/PUT/DELETE workout detail checks owner, returning 404 cross-user.
-- Import checks size, format, duplicate hashes and matching start/distance.
+- Import checks size, format, duplicate hashes and matching start/distance. ZIP imports are read from memory without extracting paths to disk; per-file and total expansion limits mitigate compressed-file abuse.
 - Static web server never stores the API signing secret or LLM API key.
 - Public registration defaults to off in production; operator account creation
   is interactive and password is never part of CLI arguments.

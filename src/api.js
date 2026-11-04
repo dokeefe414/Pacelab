@@ -145,3 +145,15 @@ export async function permanentlyDeleteAccount(password) {
     body:JSON.stringify({password,confirm:'DELETE MY ACCOUNT'}),
   });
 }
+
+export async function uploadBulkArchive(file){
+  if(!token || !currentUser)throw Error('Sign in to import ZIP exports');
+  const body=new FormData();body.append('file',file,file.name);
+  const response=await fetch(getApiBase()+'/activities/import-bulk',{
+    method:'POST',headers:{Authorization:'Bearer '+token},body,
+  });
+  let data=null;
+  try{data=await response.json();}catch{throw Error('Unexpected ZIP server response')}
+  if(!response.ok)throw Error(typeof data?.detail==='string'?data.detail:'ZIP import failed ('+response.status+')');
+  return data;
+}

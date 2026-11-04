@@ -1,7 +1,7 @@
 /** PaceLab v0.3 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {advancedStats,routePath,linePath,localTrainingAnswer} from './intelligence-core.js';
-import {apiIsConnected,uploadActivity,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
+import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV} from './api.js';
 
 const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -64,7 +64,7 @@ export function renderIntelligence(){
       'Demo mode: questions use synthetic sample workouts and never leave your browser. Sign in for real account analysis.':
       'Local mode: answers use workouts stored in your browser. Sign in to use server-backed analysis.');
   $('#fit-import-hint').textContent=apiIsConnected()?
-    'Choose .fit, .gpx or .tcx exports — up to 10 MB each; your route samples stay inside your account.':
+    'Choose FIT/GPX/TCX files (10 MB each) or a COROS bulk ZIP export (25 MB max, 100 activities). GPS remains private to your account.':
     'Sign in to import activity files. Local CSV import remains available without an account.';
 }
 function chart(title,path,width,height){
@@ -140,8 +140,14 @@ async function handleFiles(event){
     const file=chosen[i];
     status.textContent='Processing '+(i+1)+' / '+chosen.length+': '+file.name;
     try{
-      const result=await uploadActivity(file);
-      if(result.imported)added++;else duplicates++;
+      if(file.name.toLowerCase().endsWith('.zip')){
+        const result=await uploadBulkArchive(file);
+        added+=result.imported;duplicates+=result.duplicates;
+        failed.push(...result.files.filter(x=>x.status==='failed').map(x=>file.name+' / '+x.name+': '+x.message));
+      }else{
+        const result=await uploadActivity(file);
+        if(result.imported)added++;else duplicates++;
+      }
     }catch(err){failed.push(file.name+': '+err.message);}
   }
   input.value='';
