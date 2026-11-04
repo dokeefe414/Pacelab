@@ -1,3 +1,4 @@
+import {initTour} from './tour.js';
 import {KEY,parseTime,formatTime,predictRace,validateWorkout,paceSeconds,lastWeeks,summarize,toCSV,parseCSV,sampleWorkouts} from './core.js';
 import {initIntelligence,renderIntelligence} from './intelligence.js';
 import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction} from './api.js';
@@ -38,5 +39,7 @@ $('#account-button').addEventListener('click',showAccountDialog);
 $('#close-account').addEventListener('click',()=>$('#account-dialog').close());
 $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#account-submit');btn.disabled=true;$('#auth-error').textContent='';try{setApiBase($('#api-base').value);const action=$('input[name="auth-action"]:checked').value;await authenticate(action,$('#auth-email').value,$('#auth-password').value);try{await refreshRemote();}catch(err){logout();throw err;}$('#account-dialog').close();$('#auth-password').value='';toast('Connected to your private workout account.');}catch(err){$('#auth-error').textContent=err.message;}finally{btn.disabled=false;}});
 initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample});
+initTour(nav);
+$('#demo-tour').addEventListener('click',()=>$('#tour-open').click());
 load();render();
 if(hasSavedSession())restoreSession().then(async user=>{if(user){try{await refreshRemote();toast('Account session restored.');}catch(err){logout();load();render();toast('Could not restore account data: '+err.message);}}}).catch(console.error);
