@@ -6,3 +6,14 @@ dist/
 .DS_Store
 __pycache__/
 .pytest_cache/
+
+# Local data, Python environments and ML artifacts
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/.venv/
+backend/models/
+backend/data/
+*.joblib
+*.pyc
+.env

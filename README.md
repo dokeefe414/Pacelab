@@ -1,44 +1,85 @@
-# PaceLab 🏃
+# PaceLab — AI-powered Running Analytics
 
-**Run your numbers.** A privacy-first running dashboard and race-equivalence calculator, designed to evolve into a production AI-powered running analytics platform.
+**v0.2 feature branch:** A responsive workout dashboard backed by an optional authenticated FastAPI service, persistent PostgreSQL workout records, and an experimental ML training pipeline. This project is in active development.
 
-## Features (v0.1)
+## What works today
 
-- Responsive four-section dashboard: **Overview, Workout log, Race predictor, Insights**.
-- Local workout tracking with distance, time, date, type, and notes.
-- CSV import/export (including quoted fields, validation, and duplicate checks).
-- Weekly mileage, training consistency, workout mix, and pace analytics.
-- Explainable **Riegel race-equivalence formula** with a configurable exponent.
-- Sample workouts for first-time exploration. Your first actual logged/imported workout replaces sample data.
-- Data remains in the browser's localStorage; no server or account is used yet.
-- Automated core tests and CI.
+- Overview, workout history, weekly mileage, training insights, and explainable Riegel race equivalence.
+- Local demo mode with synthetic example runs, CSV import/export, and browser-only storage.
+- Optional account mode: register, sign in, log and delete your own workouts via authenticated API requests. User data is isolated in the database.
+- FastAPI API docs, SQLAlchemy models, Alembic migrations, PostgreSQL Compose configuration and tests.
+- Model training script on **your real, labeled race-history CSV**. No machine learning model is shipped by default; the ML inference endpoint returns 503 until you configure your own trusted trained model. Reports held-out MAE and empirical interval coverage.
 
-> **Important:** Race projections are mathematical equivalents from a user-provided reference performance, **not** personalized ML forecasts. The AI/model training phase is still planned. This app does not provide medical advice.
+**Caution:** This is an engineering MVP, **not a public production service**. Registration lacks anti-abuse, email verification, hardened browser sessions and rate limiting. The model is experimental and should not be presented as validated or used as medical guidance.
 
-## Try it
+## Quick start: full stack with Docker
 
-If GitHub Pages is enabled for this repository, use the Pages URL shown in the repository settings. The app uses relative asset paths and can be hosted as a static site.
+Install Docker Desktop, then:
 
-## Local development
+```bash
+cp .env.example .env
+# Edit .env: replace BOTH sample values with long, random, unique secrets.
+docker compose up --build
+```
 
-Requires Node.js 20.19+ or 22+ and npm.
+Visit **http://localhost:8080**. Use **Sign in / Create account** to register. API and PostgreSQL stay on the internal Docker network; the frontend Nginx proxy routes `/api/` to FastAPI.
+
+On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp` if needed. Never commit your `.env` file.
+
+## Local development without Docker
+
+Requirements: Node.js 22+, Python 3.12+ and npm.
+
+Terminal 1:
+
+```bash
+cd backend
+python -m venv .venv
+# Activate your venv (Windows PowerShell: .venv\\Scripts\\Activate.ps1)
+python -m pip install -r requirements-dev.txt
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
+```
+
+Terminal 2 (repository root):
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the localhost URL printed by Vite. To run tests and create the production bundle:
+Visit the URL printed by Vite (usually http://localhost:5173). Vite proxies `/api` to localhost:8000. The API docs are at **http://localhost:8000/api/docs**. The default backend database is a local SQLite file; Compose uses PostgreSQL instead.
+
+## Testing
 
 ```bash
 npm test
 npm run build
-npm run preview
+cd backend
+python -m pytest -q
 ```
 
-For static hosting, deploy the `dist/` directory (or serve the root directory as static files).
+GitHub Actions run frontend and backend tests, a frontend production build, and a migration smoke test on branches and PRs.
 
-## Import CSV format
+## Machine-learning experiment (no fake trained model)
+
+Provide a CSV of **60+ labeled race records**, with each row containing only features available *before* the race:
+
+```csv
+date,event_meters,weekly_miles_4w,average_easy_pace_seconds_per_mile,hard_sessions_4w,longest_run_miles,finish_seconds
+2026-02-01,5000,40,480,5,12,1150
+```
+
+The sample row above illustrates **format only**; it is not a dataset. From `backend/`:
+
+```bash
+pip install -r requirements-ml.txt
+python -m ml.train --csv path/to/your-private-race-history.csv --output models/race_rf.joblib
+```
+
+Training uses chronological train/validation/test partitions, compares a median baseline to random forest, and reports held-out MAE and empirical prediction-interval coverage. Set `PACELAB_MODEL_PATH` on your API service to serve a trained trusted local artifact. Don't commit private race history or artifacts. **Data availability and model quality remain open problems.**
+
+## CSV workout imports
 
 ```csv
 date,type,distance_miles,duration,notes
@@ -46,32 +87,10 @@ date,type,distance_miles,duration,notes
 2026-11-03,Intervals,4.5,31:00,Track workout
 ```
 
-Required columns: `date` (YYYY-MM-DD), `distance_miles` (or `distance`/`miles`), `duration` (MM:SS or HH:MM:SS). Optional: `type`, `notes`. Distances are in **miles**, duration is elapsed time; importing does **not** currently support COROS FIT or GPX files. Export your data before clearing your browser's storage.
+`date` (YYYY-MM-DD), `distance_miles`, and `duration` are required. Workouts are measured in miles and elapsed time. Imports in account mode create workouts on your connected backend; partial failures are reported, and duplicate detection uses date, type, distance and duration. Local workouts are **not automatically synced** when you sign in; export and import your CSV if you choose to upload them.
 
-## Architecture
+## Architecture and next steps
 
-```text
-index.html            UI views and dialog
-styles.css            Responsive dark UI
-src/core.js           Pure metrics, validation, CSV, race prediction
-src/app.js            Rendering, event handling, localStorage
- tests/core.test.js   Node built-in test runner
-.github/workflows/ci.yml
-```
-
-## Roadmap
-
-1. **Backend:** FastAPI + PostgreSQL, authentication, migrations, and versioned REST API.
-2. **Data ingestion:** Robust FIT/GPX integration, time zones, activity deduplication, upload limits.
-3. **Model development:** Real athlete/race training data, chronological splits, baselines, feature engineering and evaluation. Avoid leakage from future workouts. Report MAE and calibrated intervals by event and ability level.
-4. **AI assistant:** Explain workout trends using verified statistics with explicit tool access and guardrails; do not hallucinate training history.
-5. **Production:** Docker, API integration tests, monitoring, security review, hosted frontend and backend.
-
-## Quality and data notes
-
-- The sample dataset is synthetic. It's only a UI demonstration and should never be presented as real athlete data.
-- The predictor assumes race efforts on comparable terrain and conditions and is not individualized.
-- Storage is per browser and device. Clearing local storage destroys unsaved records; CSV export provides a backup.
-- This is an early frontend MVP, not yet a full-stack or machine-learning product.
+See [architecture](docs/architecture.md). A public deployment needs HTTPS, operational security, backups, logging, stable hosted PostgreSQL and secure session architecture. Future work: FIT/GPX ingestion, better athlete-specific baselines, prospective model evaluation, athlete privacy controls, and a natural-language training assistant.
 
 Built by Daniel O'Keefe.
