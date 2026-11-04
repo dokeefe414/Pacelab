@@ -74,6 +74,26 @@ export function workoutComparison(workouts,idA,idB){
   };
 }
 
+
+/** Coverage of optional wearable measurements; missing is NOT zero. */
+export function sensorCoverage(workouts,today=new Date()){
+  const cutoff=localDate(today);
+  const items=workouts.filter(w=>w.date<=cutoff);
+  const count=items.length;
+  const metrics=[
+    {label:'Average heart rate',predicate:w=>Number.isFinite(w.avgHeartRate)},
+    {label:'Maximum heart rate',predicate:w=>Number.isFinite(w.maxHeartRate)},
+    {label:'Cadence',predicate:w=>Number.isFinite(w.avgCadenceSpm)},
+    {label:'Running power',predicate:w=>Number.isFinite(w.avgPowerWatts)},
+    {label:'Elevation gain',predicate:w=>Number.isFinite(w.elevationGainMeters)},
+  ];
+  return {total:count,rows:metrics.map(item=>{
+    const available=items.filter(item.predicate).length;
+    return {label:item.label,available,missing:count-available,
+      percent:count?Number((100*available/count).toFixed(1)):0};
+  })};
+}
+
 function raceChart(points){
   if(points.length<2)return '<p class="body-copy">Log at least two Race workouts at this distance to see race progression.</p>';
   const width=540,height=155,pad=26;
@@ -120,6 +140,16 @@ function renderComparison(){
 
 export function renderPerformance(){
   const workouts=getWorkouts();
+  const coverage=sensorCoverage(workouts);
+  $('#sensor-coverage-summary').textContent=coverage.total?
+    'Coverage across '+coverage.total+' logged workouts. Missing sensors are not recorded zeroes.':
+    'No workouts logged. Optional device measurements are unavailable.';
+  $('#sensor-coverage-grid').innerHTML=coverage.rows.map(item=>
+    '<div class="sensor-coverage-item"><div class="sensor-coverage-heading">'+
+      '<span>'+escapeHTML(item.label)+'</span><strong>'+item.available+'/'+coverage.total+
+      ' · '+item.percent.toFixed(0)+'%</strong></div>'+
+      '<div class="sensor-coverage-track"><span style="width:'+item.percent+'%"></span></div></div>'
+  ).join('');
   const calendar=trainingCalendar(workouts);
   $('#performance-heatmap').innerHTML=calendar.days.map(d=>
     '<span class="heatmap-day heatmap-level-'+d.level+(d.future?' future':'')+'"'+

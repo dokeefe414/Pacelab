@@ -19,6 +19,11 @@
 <label>Second period ends<input id="compare-end-b" type="date" required></label>
 </div><button class="secondary" type="submit">Compare logged training</button></form><div id="compare-result"></div></article>
 <article class="panel"><div class="panel-title"><div><div class="eyebrow">CONSISTENCY / LAST 12 WEEKS</div><h2>Training calendar</h2></div></div><p class="body-copy">Each tile represents one day, colored by mileage. Unlogged days remain empty.</p><div id="performance-heatmap" class="performance-heatmap" aria-label="Daily training mileage calendar"></div><p id="performance-calendar-summary" class="body-copy"></p></article>
+<article class="panel"><div class="panel-title"><div><div class="eyebrow">DATA QUALITY / WEARABLE SENSORS</div><h2>Recorded sensor coverage</h2></div></div>
+<p id="sensor-coverage-summary" class="body-copy">Missing wearable data is unknown, not zero.</p>
+<div id="sensor-coverage-grid" class="sensor-coverage-grid"></div>
+<p class="body-copy">Percentages count logged workouts with a recorded summary field. They do not measure sensor accuracy or fitness; GPX or manual activities may lack these metrics.</p>
+</article>
 <article class="panel"><div class="panel-title"><div><div class="eyebrow">YOUR ACTUAL RACES</div><h2>Race progression</h2></div></div><label for="race-event">Event distance</label><select id="race-event" aria-label="Race distance for progression"><option value="800">800m</option><option value="1609.344">Mile</option><option value="3000">3K</option><option value="5000" selected>5K</option><option value="8000">8K</option><option value="10000">10K</option></select><div id="race-progress-chart" aria-live="polite"></div></article>
 <article class="panel"><div class="panel-title"><div><div class="eyebrow">SESSION TO SESSION</div><h2>Compare individual workouts</h2></div></div><div class="form-grid"><label for="workout-compare-a">First workout<select id="workout-compare-a"></select></label><label for="workout-compare-b">Second workout<select id="workout-compare-b"></select></label></div><div id="workout-compare-result" class="body-copy" aria-live="polite"></div></article>
 <article class="panel"><div class="panel-title"><h2>Recorded personal bests</h2></div><div id="race-prs"></div></article></div></section>

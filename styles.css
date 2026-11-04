@@ -124,3 +124,12 @@
 .import-consent-check input{accent-color:#b5f36c;margin-top:3px;flex-shrink:0}
 .import-consent-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:18px}
 .import-consent-actions button:disabled{opacity:.45;cursor:not-allowed}
+
+.sensor-coverage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin:18px 0}
+.sensor-coverage-item{border:1px solid #344851;border-radius:10px;padding:13px;background:#162831}
+.sensor-coverage-heading{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:12px}
+.sensor-coverage-heading span{color:#b6c7c5}
+.sensor-coverage-heading strong{font-variant-numeric:tabular-nums;color:#b5f36c;white-space:nowrap}
+.sensor-coverage-track{height:8px;border-radius:6px;background:#2a3e49;overflow:hidden}
+.sensor-coverage-track span{display:block;height:100%;border-radius:6px;background:#b5f36c}
+@media(max-width:530px){.sensor-coverage-grid{grid-template-columns:1fr}}
