@@ -15,8 +15,9 @@ scrubs all possible backups.
 
 - User-scoped workout authorization and Argon2 password hashing.
 - Short-lived JWT bearer tokens; registration disabled by default in
-  production. The browser uses tab-local sessionStorage; this is not equivalent
-  to hardened HttpOnly cookie sessions with token revocation.
+  production. JWT generation numbers now support global token revocation
+  after password change/sign-out. The browser still uses tab-local
+  sessionStorage rather than hardened HttpOnly cookie sessions.
 - Per-process request limits, redacted JSON request logging, request IDs,
   cache controls, file-size limits and hardened ZIP/XML parsing.
 - Liveness at /api/health and database readiness at /api/ready.
@@ -55,3 +56,25 @@ production DNS. Do not include personal FIT files in public test fixtures.
 
 The GitHub Pages demo is frontend-only with synthetic data. It has no
 authenticated backend unless separately configured and hosted.
+
+
+## Consent, data-use and account actions (v0.7)
+
+Before a COROS import, PaceLab asks for affirmative acknowledgment that
+sampling GPS data can retain sensitive coordinates and timestamps in the
+private account. Canceling the dialog sends **no activity file**.
+
+The assistant answers locally from verified statistics by default.
+Only if the user opts into **one external AI question** may the server
+transmit that question and aggregate metrics to its configured provider.
+Raw route points, notes and account email are intentionally excluded.
+
+Signing out through the server or changing an account password revokes
+all previously issued tokens across devices via an account generation
+counter. In a network failure, clearing the browser token does **not**
+prove the server revoked every token; token expiry remains 60 minutes.
+
+For opt-in managed hosting, review the Render costs and managed database
+backup policy before creation. Cloud provider backups must be explicitly
+accounted for in retention/deletion policy. Adding render.yaml does not
+activate any infrastructure.

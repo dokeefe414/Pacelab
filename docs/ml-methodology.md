@@ -142,3 +142,31 @@ Do not claim a model is reliable or outperforming baselines unless:
 
 The project's time-series-distribution-shift research provides a useful
 future direction, but is **not yet a validated component of PaceLab**.
+
+
+## v0.7: Account-scoped research readiness
+
+The private `GET /api/exports/race-readiness` endpoint reports how many
+labeled race examples have sufficient preceding training data and distinct
+dates. Eligibility requires a genuine Race-labeled finish at a supported
+distance and enough training strictly before race day.
+
+Passing the minimum 60 rows and 12 distinct dates is a **precondition** for
+an offline research experiment, not proof of accuracy, sufficient sample
+diversity or athlete coverage.
+
+## Optional athlete-disjoint experiment
+
+A research dataset may include a stable, pseudonymous `athlete_id`
+column **only when each participant has consented**. The offline trainer
+then reports group-disjoint cross-validation if there are at least three
+distinct athlete pseudonyms. Each fold tests athletes excluded from its
+training fold and records aggregate model errors without publishing
+identities.
+
+**Group-disjoint folds are not chronological.** They complement the
+held-out later-race evaluation; they do not make it prospective or prove
+reliability on unseen future cohorts. Absence of the athlete_id column
+is explicitly reported as not evaluated, rather than claiming success.
+
+See the [governance and consent guide](race-data-governance.md).
