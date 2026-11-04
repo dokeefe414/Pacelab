@@ -4,14 +4,14 @@
 
 **No downloads or installation needed.** Explore the interactive running dashboard, sample workouts, training analytics, race-equivalence calculator, and local training assistant.
 
-> **Publishing required:** If the link shows 404, go to [Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages) and set **Source: Deploy from a branch**, **Branch: main**, **Folder: /(root)**, then click **Save**. This bypasses the custom GitHub Actions workflow. The demo uses sample data; private COROS imports and accounts require a separately hosted backend.
+> **Published browser demo:** GitHub Pages successfully deployed PaceLab from `main` on November 4, 2026. This version includes interactive sample data and browser-local features. Account login, private COROS file imports, and hosted ML inference still require a separate backend.
 
 **A full-stack running analytics and experimental race-prediction platform.**
 
 Built by Daniel O'Keefe as a software-engineering and AI/ML portfolio project.
 
 **Current release: v0.5 private-beta code.** The public GitHub repository contains the
-application, tests and deployment configuration. **A full-stack public server is not currently hosted, and the Pages demo deployment is not yet confirmed live.** The race
+application, tests and deployment configuration. **The sample-data Pages demo has deployed successfully, but the full-stack backend is not publicly hosted.** The race
 prediction model requires genuine labeled data before any performance claims.
 
 ## What PaceLab does
@@ -120,19 +120,18 @@ before turning that on for other people.
 
 ## One-click browser access — no downloads
 
-The **sample-data browser demo** is designed to run directly from this
+The **live sample-data browser demo** runs directly from this
 repository's static files (`index.html`, `styles.css`, and `src/`).
 It does not require Node, Vite or an API server to **view** it.
 
-**One-time publishing step:**
+**Deployment setup (already completed):**
 
 1. Open [Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages).
 2. Under **Build and deployment**, set **Source = Deploy from a branch**.
 3. Choose **Branch = main** and **Folder = /(root)**, then **Save**.
 4. Visit `https://dokeefe414.github.io/Pacelab/` once GitHub publishes.
 
-This direct source deployment avoids dependency on the custom queued Pages
-workflow. The `.nojekyll` file ensures GitHub serves the raw static assets.
+The repository publishes from `main` without a separate custom Actions deployment workflow. The `.nojekyll` file ensures GitHub serves the raw static assets.
 See [browser demo setup](docs/public-demo.md) for troubleshooting.
 
 **What works without a backend:** Synthetic sample workouts, local logging,

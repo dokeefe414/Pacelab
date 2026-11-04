@@ -1,16 +1,13 @@
 # Make PaceLab a working browser link
 
-## Recommended: publish directly from main (no build workflow)
+## Current publishing setup: main branch, root directory
 
-GitHub Actions deployment has been queued without publishing the site.
-PaceLab's frontend uses browser-supported JavaScript modules with relative
-imports and can be served directly from the repository root.
+**Status: deployed successfully.** The November 4, 2026 GitHub Pages branch deployment completed successfully. PaceLab's frontend uses browser-supported JavaScript modules with relative imports and is served from the repository root.
 
 1. Open [Settings → Pages](https://github.com/dokeefe414/Pacelab/settings/pages).
 2. Under **Build and deployment**, set **Source → Deploy from a branch**.
 3. Set **Branch: main**, **Folder: /(root)** and click **Save**.
-4. Once GitHub reports the Pages site is published, open
-   **https://dokeefe414.github.io/Pacelab/**.
+4. Open the **published website:** [PaceLab browser demo](https://dokeefe414.github.io/Pacelab/).
 
 The repository includes `.nojekyll` to serve the HTML, CSS and JavaScript
 files directly, with no npm build required. This is a **static demonstration
@@ -28,14 +25,6 @@ statistics assistant. The full FastAPI/Postgres service is not deployed.
 - Confirm the address is `/Pacelab/` (matching the repository name).
 - If you just enabled Pages, refresh after publication completes. A site
   remains unavailable until GitHub has finished publishing it.
-
-## Optional: built artifact through Actions
-
-The repository also has a workflow under
-[Actions → Deploy static demo to GitHub Pages](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml).
-That approach requires **Source: GitHub Actions**, a successful workflow
-run and available Actions workers. If all actions remain queued, use
-the recommended branch route instead.
 
 ## Capabilities and privacy
 
