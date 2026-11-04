@@ -100,7 +100,7 @@ def _laps_from_points(points):
     return result[:200]
 
 
-def _build(points, *, distance_meters=None, duration_seconds=None, start=None, heart_rate=None, elevation_gain=None, laps=None, source):
+def _build(points, *, distance_meters=None, duration_seconds=None, elapsed_seconds=None, start=None, heart_rate=None, max_heart_rate=None, elevation_gain=None, elevation_loss=None, avg_cadence=None, avg_power=None, laps=None, source):
     if not points and (distance_meters is None or duration_seconds is None or start is None):
         raise ActivityParseError("Activity has no usable time and distance information")
     timed = [p for p in points if p.get("time") is not None]
@@ -111,6 +111,9 @@ def _build(points, *, distance_meters=None, duration_seconds=None, start=None, h
     duration = duration_seconds if duration_seconds is not None else ((last-first).total_seconds() if last else None)
     if duration is None or not (0 < duration <= 86400):
         raise ActivityParseError("Activity duration must be between 1 second and 24 hours")
+    wall_elapsed = elapsed_seconds if elapsed_seconds is not None else ((last-first).total_seconds() if last else duration)
+    if not (0 < wall_elapsed <= 86400):
+        raise ActivityParseError("Invalid elapsed activity duration")
     traveled = distance_meters
     if traveled is None and points:
         traveled = points[-1].get("distanceMeters")
@@ -126,11 +129,28 @@ def _build(points, *, distance_meters=None, duration_seconds=None, start=None, h
             if elevation is not None:
                 prev_elev = elevation
         elevation_gain = up if prev_elev is not None else None
+    if elevation_loss is None:
+        down, previous = 0.0, None
+        for point in points:
+            altitude = _fit_elevation(point.get("elevationMeters"))
+            if previous is not None and altitude is not None and previous > altitude:
+                down += previous-altitude
+            if altitude is not None:
+                previous=altitude
+        elevation_loss = round(down, 1) if previous is not None else None
     hr_values = [p["heartRate"] for p in points if p.get("heartRate") is not None and 30 <= p["heartRate"] <= 230]
     if heart_rate is None and hr_values:
         heart_rate = round(mean(hr_values))
     if heart_rate is not None and not (30 <= heart_rate <= 230):
         heart_rate = None
+    if max_heart_rate is None and hr_values:
+        max_heart_rate = max(hr_values)
+    if max_heart_rate is not None and not (30 <= max_heart_rate <= 230):
+        max_heart_rate = None
+    if avg_cadence is not None and not (0 < avg_cadence <= 260):
+        avg_cadence = None
+    if avg_power is not None and not (0 < avg_power < 2500):
+        avg_power = None
     track = []
     for p in points:
         point_time = p.get("time")
@@ -138,6 +158,8 @@ def _build(points, *, distance_meters=None, duration_seconds=None, start=None, h
             "elapsed": round(max(0, (point_time-first).total_seconds()), 1) if point_time else None,
             "distanceMiles": round(p["distanceMeters"]*MILES_PER_METER, 4) if p.get("distanceMeters") is not None else None,
             "heartRate": _fit_heart_rate(p.get("heartRate")),
+            "cadenceSpm": round(p["cadenceSpm"], 1) if _numeric(p.get("cadenceSpm")) is not None and 0 <= p["cadenceSpm"] <= 260 else None,
+            "powerWatts": round(p["powerWatts"]) if _numeric(p.get("powerWatts")) is not None and 0 <= p["powerWatts"] < 2500 else None,
             "elevationMeters": round(p["elevationMeters"], 1) if _fit_elevation(p.get("elevationMeters")) is not None else None,
             "lat": round(p["lat"], 6) if p.get("lat") is not None else None,
             "lon": round(p["lon"], 6) if p.get("lon") is not None else None,
@@ -147,10 +169,15 @@ def _build(points, *, distance_meters=None, duration_seconds=None, start=None, h
         valid_laps = _laps_from_points(track)
     return {
         "date": first.date(), "startTime": first, "durationSeconds": round(duration),
+        "elapsedSeconds": round(max(duration, wall_elapsed)),
         "distanceMiles": round(traveled*MILES_PER_METER, 4), "type": "Easy",
         "notes": "Imported from " + source.upper() + " activity",
         "source": source, "avgHeartRate": round(heart_rate) if heart_rate else None,
         "elevationGainMeters": round(elevation_gain, 1) if elevation_gain is not None else None,
+        "elevationLossMeters": round(elevation_loss, 1) if elevation_loss is not None else None,
+        "maxHeartRate": round(max_heart_rate) if max_heart_rate is not None else None,
+        "avgCadenceSpm": round(avg_cadence, 1) if avg_cadence is not None else None,
+        "avgPowerWatts": round(avg_power, 1) if avg_power is not None else None,
         "laps": valid_laps, "track": _downsample(track),
     }
 
@@ -283,6 +310,8 @@ def parse_fit(contents):
                         "time": _time(_fit_get(frame,"timestamp")), "lat":lat, "lon":lon,
                         "distanceMeters":_fit_distance(_fit_get(frame,"distance")),
                         "heartRate":_fit_heart_rate(_fit_get(frame,"heart_rate")),
+                        "cadenceSpm": (_numeric(_fit_get(frame,"cadence")) or 0) * 2 if _numeric(_fit_get(frame,"cadence")) is not None else None,
+                        "powerWatts": _numeric(_fit_get(frame,"power")),
                         "elevationMeters":_fit_elevation(_fit_get(frame,"enhanced_altitude")) if _fit_get(frame,"enhanced_altitude") is not None else _fit_elevation(_fit_get(frame,"altitude")),
                     })
     except ActivityParseError:
@@ -296,11 +325,19 @@ def parse_fit(contents):
         raise ActivityParseError("Only running activities can be imported")
     start = _time(_fit_get(session,"start_time"))
     duration = _numeric(_fit_get(session,"total_timer_time")) or _numeric(_fit_get(session,"total_elapsed_time"))
+    elapsed = _numeric(_fit_get(session,"total_elapsed_time"))
     distance = _fit_distance(_fit_get(session,"total_distance"))
     ascent = _numeric(_fit_get(session,"total_ascent"))
     hr = _fit_heart_rate(_fit_get(session,"avg_heart_rate"))
-    return _build(points, source="fit", start=start, duration_seconds=duration, distance_meters=distance,
-                  heart_rate=hr, elevation_gain=ascent, laps=device_laps)
+    avg_cadence = _numeric(_fit_get(session, "avg_cadence"))
+    avg_power = _numeric(_fit_get(session, "avg_power"))
+    descent = _numeric(_fit_get(session, "total_descent"))
+    max_hr = _fit_heart_rate(_fit_get(session, "max_heart_rate"))
+    return _build(points, source="fit", start=start, duration_seconds=duration, elapsed_seconds=elapsed,
+                  distance_meters=distance, heart_rate=hr, max_heart_rate=max_hr,
+                  elevation_gain=ascent, elevation_loss=descent,
+                  avg_cadence=avg_cadence*2 if avg_cadence is not None else None,
+                  avg_power=avg_power, laps=device_laps)
 
 
 def parse_activity(filename: str, contents: bytes):

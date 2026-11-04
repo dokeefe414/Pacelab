@@ -123,3 +123,42 @@ export function compareDateWindows(workouts,startA,endA,startB,endB) {
   if(startA>endA || startB>endB)throw Error('Start dates must be on or before end dates');
   return {first:summarize(valid(startA,endA)),second:summarize(valid(startB,endB))};
 }
+
+
+/**
+ * Fixed absolute heart-rate bands, NOT athlete-specific physiological zones.
+ * Weighted by adjacent sample intervals, capped at five seconds so sensor
+ * gaps, pauses and sparse imports are not counted as observed training time.
+ */
+export const HEART_RATE_BANDS = ["<120", "120–139", "140–159", "160–179", "180+"];
+export function heartRateBands(points){
+  const samples=(points||[]).filter(p=>Number.isFinite(p.elapsed)).sort((a,b)=>a.elapsed-b.elapsed);
+  const seconds=[0,0,0,0,0];
+  let validSamples=0;
+  for(let i=0;i<samples.length-1;i++){
+    const current=samples[i],next=samples[i+1];
+    const hr=current.heartRate;
+    if(!Number.isFinite(hr) || hr<30 || hr>230)continue;
+    const delta=next.elapsed-current.elapsed;
+    if(!Number.isFinite(delta)||delta<=0)continue;
+    const band=hr<120?0:hr<140?1:hr<160?2:hr<180?3:4;
+    seconds[band]+=Math.min(delta,5);
+    validSamples++;
+  }
+  const total=seconds.reduce((a,b)=>a+b,0);
+  return {labels:HEART_RATE_BANDS,seconds,measuredSeconds:total,validSamples};
+}
+
+/**
+ * Normalize irregular interval/device laps to pace per mile for comparison.
+ * Short recoveries are shown separately, not confused with full mile splits.
+ */
+export function lapPaces(laps){
+  return (laps||[]).filter(l=>Number.isFinite(Number(l.distanceMiles))&&
+    Number(l.distanceMiles)>0&&Number(l.durationSeconds)>0).map(l=>({
+    number:Number(l.number),distanceMiles:Number(l.distanceMiles),
+    durationSeconds:Number(l.durationSeconds),
+    paceSecondsPerMile:Number(l.durationSeconds)/Number(l.distanceMiles),
+    source:l.source,
+  }));
+}

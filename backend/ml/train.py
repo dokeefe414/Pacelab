@@ -16,6 +16,7 @@ import csv
 import json
 import math
 from statistics import mean
+from sklearn.inspection import permutation_importance
 from datetime import date
 from pathlib import Path
 from .evaluate import chronological_backtest, grouped_dates, model_candidates, predict_riegel_from_training, numerical_metrics
@@ -99,6 +100,13 @@ def train(csv_path, output_path):
                 "mae_seconds":round(float(np.mean(np.abs(test_y[indices]-predictions[indices]))),2),
             }
     backtest=chronological_backtest(rows)
+    # Permutation importance is estimated on the validation cohort only.
+    # It is model-specific association, not a causal explanation.
+    importances=permutation_importance(chosen,val_x,val_y,
+        scoring="neg_mean_absolute_error",n_repeats=5,random_state=42,n_jobs=1)
+    importance={key:round(float(importance),3) for key,importance
+        in zip(FEATURES,importances.importances_mean)}
+
 
     report={
         "dataset_origin":"user_supplied_labeled_race_results",
@@ -112,6 +120,9 @@ def train(csv_path, output_path):
         "validation_baseline_mae_seconds":round(validation["median_baseline"],2),
         "validation_forest_mae_seconds":round(validation["random_forest"],2),
         "selected_model":name,
+        "validation_permutation_importance_mae_seconds":importance,
+        "test_records_per_event":{str(int(meters)):sum(float(r[1][0])==meters for r in test_rows)
+            for meters in sorted(set(float(r[1][0]) for r in test_rows))},
         "test_mae_seconds":round(test_mae,2),
         "test_rmse_seconds":numerical_metrics(list(test_y),list(predictions))["rmse_seconds"],
         "test_median_baseline_mae_seconds":test_median,
@@ -139,6 +150,31 @@ def train(csv_path, output_path):
     },output)
     report_path=output.with_suffix(".metrics.json")
     report_path.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+    # Human-readable experiment report, intentionally independent of any UI hype.
+    model_card=output.with_suffix(".model-card.md")
+    leaderboard="\n".join(
+        f"| {candidate} | {error:.2f} s |" for candidate,error
+        in sorted(validation.items(),key=lambda pair:pair[1])
+    )
+    model_card.write_text(
+        "# PaceLab — Exploratory race-time model card\n\n"
+        "## Status\nNot externally validated or production-certified. "
+        "Only operator-supplied labeled data were used.\n\n"
+        "## Validation comparison (lower is better)\n"
+        "| Model | Validation MAE |\n|---|---:|\n"+leaderboard+"\n\n"
+        f"Selected on validation: **{name}**.\n\n"
+        f"Held-out later-date test MAE: **{test_mae:.2f} seconds**.\n\n"
+        f"Median baseline MAE: **{test_median:.2f} seconds**.\n\n"
+        f"Riegel prior-race comparator MAE: **{riegel_mae:.2f} seconds**.\n\n"
+        f"Observed 90% interval coverage: **{coverage:.1%}**; "
+        f"estimated interval half-width: {half_width:.1f} seconds. "
+        "Nominal intervals are not distribution-shift guarantees.\n\n"
+        "## Features\n"
+        + "\n".join(f"- {name}" for name in FEATURES)
+        + "\n\n## Evaluation caveats\n"
+        + "\n".join("- "+c for c in report["limitations"])
+        + "\n\nDo not present this model as a guaranteed race forecast.\n",
+        encoding="utf-8")
     print(json.dumps(report,indent=2))
     return report
 

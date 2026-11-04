@@ -1,165 +1,160 @@
-# PaceLab 🏃 — Running analytics and race prediction
+# PaceLab — Running Intelligence
 
-**PaceLab v0.4** is a full-stack, privacy-aware running analytics platform. Runners can import device activity files, inspect training trends and route traces, ask grounded questions about their recorded workouts, and experiment with race predictions.
+**A full-stack running analytics and experimental race-prediction platform.**
 
-Built by **Daniel O'Keefe** as a software-engineering and AI/ML portfolio project.
+Built by Daniel O'Keefe as a software-engineering and AI/ML portfolio project.
 
-> **Status:** Engineering beta. This repo does not contain a deployed public service, a real-data-trained model, or a direct COROS OAuth sync. The race-equivalence baseline is mathematical; the supervised ML model is optional and experimental. Do not rely on the predictions for medical or training safety decisions.
+**Current release: v0.5 private-beta code.** The public GitHub repository contains the
+application, tests and deployment configuration. **A live hosted full-stack
+service and a verified public Pages demo are not yet activated.** The race
+prediction model requires genuine labeled data before any performance claims.
 
-## What's implemented
+## What PaceLab does
 
-| Area | Functionality |
+| Area | Capabilities |
 | --- | --- |
-| Running dashboard | Weekly mileage, duration, average pace, activity breakdown |
-| Device ingestion | Private FIT, GPX and TCX uploads, plus bounded COROS bulk ZIP ingestion (up to 100 supported activities per archive) |
-| Workout details | Distance, duration, heart rate, ascent, device laps / approximate mile splits, schematic route, HR and elevation traces |
-| Data persistence | FastAPI, PostgreSQL with Alembic migrations, authenticated accounts, user-isolated records |
-| Duplicate detection | Hash-matched imports plus start-time/distance/duration cross-format checks |
-| Workout management | Add, edit type/notes, delete, local CSV import/export |
-| Advanced analytics | Last 7 vs prior 7 days, 12-week volume, weighted minutes, easy-pace trends, recorded race bests |
-| Race models | Riegel baseline, latest recorded race equivalent, derived last-28-day features for optional trained model |
-| ML experiment | Leakage-conscious CSV export, chronological train/validation/test splits, median vs random-forest comparison, test MAE and empirical interval coverage |
-| Training assistant | Deterministic private statistics Q&A; optional externally hosted language model with aggregate-only context |
-| Infrastructure | Docker Compose (local) and an HTTPS self-hosting example, frontend and backend GitHub Actions tests |
+| Activities | Import single FIT, TCX, GPX or bounded bulk ZIP exports, with owner-scoped deduplication |
+| COROS details | Separate moving timer and elapsed time; cadence, power, HR, elevation, GPS samples and recorded device laps when available |
+| Training intelligence | Weekly mileage, training consistency, route and pace plots, normalized splits, heart-rate distribution, and comparison between any two periods |
+| Race history | Recorded PBs and formula-based Riegel equivalents of recent races |
+| Machine learning | Date-grouped splits and rolling backtests; median, ridge, random forest, boosting, tiny neural baseline and prior-race Riegel comparisons |
+| Training assistant | Verified statistics, recent supporting workouts and an optional provider-backed wording layer |
+| Engineering | FastAPI, authenticated user data, PostgreSQL, Alembic migrations, Docker, privacy tools and Playwright end-to-end tests |
+| Operations | Database health probes, redacted request logs, backup scripts and isolated restore checks |
 
-## Quick start: full application on Windows
+**The demo is synthetic.** Real race predictions are never labeled validated
+unless an appropriate labeled dataset is evaluated, with meaningful held-out
+errors and generalization checks. Training-weight and HR-band visualizations are
+not medical or physiological recommendations.
 
-Install **Docker Desktop**, then open PowerShell:
+## Run the complete application locally
 
-\`\`\`powershell
+Install Docker Desktop. In PowerShell:
+
+~~~powershell
 git clone https://github.com/dokeefe414/Pacelab.git
 cd Pacelab
 Copy-Item .env.example .env
 notepad .env
-\`\`\`
+~~~
 
-**Replace** \`POSTGRES_PASSWORD\` and \`PACELAB_SECRET_KEY\` with independent, secure random values. The sample secrets are NOT for deployment.
+Replace the sample database password and JWT secret in your private .env file
+with **separate secure random values**, then run:
 
-\`\`\`powershell
+~~~powershell
 docker compose up --build
-\`\`\`
+~~~
 
-Visit **http://localhost:8080** and select **Sign in / Create account**.
+Open **http://localhost:8080**. Register, log runs, or sign in and import your
+FIT/GPX/TCX/ZIP exports. The backend and PostgreSQL use an internal Docker
+network. For the local non-Docker setup see [the architecture guide](docs/architecture.md).
+Do not commit .env, original FIT files, private data exports or database dumps.
 
-If you want to run without Docker:
+## Real COROS compatibility
 
-Terminal 1:
+Four real, private COROS FIT files were inspected independently (a race, long
+run, easy run and interval workout). Their session distances, timer durations,
+elapsed durations and device-lap structures were compared with the original
+COROS summaries. **No private FIT bytes, GPS coordinates or device IDs appear
+in this repository.** There are additional synthetic binary FIT decoder
+tests and missing-data tests in backend/tests.
 
-\`\`\`powershell
+The independent private-byte inspection is not a substitute for a complete
+end-to-end import into a running PaceLab account. Validate on your own machine:
+
+~~~powershell
 cd backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
-\`\`\`
+python -m tools.verify_fit "C:\private\run.fit" --distance-km 10.0 --timer-sec 3000
+~~~
 
-Terminal 2 (repository root):
+The tool reports only summary diagnostics; it never prints raw GPS. Enter the
+actual activity distance/time from your watch, rather than the sample values.
+Use the **Workout log → FIT / GPX / ZIP** button to import up to 50 selected
+files or one ZIP containing up to 100 supported activity files (25 MB
+compressed / 80 MB expanded / 10 MB per activity).
 
-\`\`\`powershell
-npm install
-npm run dev
-\`\`\`
+A FIT session can report **timer time shorter than total elapsed time** if
+the watch was paused. Stored lap distances can vary for structured workouts.
+Fixed heart-rate bands are not your personalized physiological zones.
 
-Visit the local Vite URL (normally http://localhost:5173). API docs: **http://localhost:8000/api/docs**. Local non-Docker development defaults to SQLite; Docker uses PostgreSQL.
+## Model evaluation: research, not prediction hype
 
-## Import COROS workouts
+A signed-in runner can mark real races and choose **Race predictor → Export
+real race-training CSV**. Each labeled row uses only data from the 28 days
+strictly before the race. Same-day/future workouts are excluded, and rows
+without enough prior training are omitted.
 
-1. On COROS, open the recorded activity and select **Export Data**. Choose **FIT** to retain heart-rate/sensor metrics; GPX is an option if you only need a timed GPS track.
-2. For bulk history, sign in to **COROS Training Hub** on desktop, go to **Activity List → Export Data**, and request **FIT or TCX**. Import the ZIP directly or extract individual activity files.
-3. In PaceLab, sign in and go to **Workout log → FIT / GPX / TCX**. Select up to 50 individual files per batch (up to **10 MB per file**) or a bulk ZIP (up to **25 MB compressed**, 100 supported activities and 80 MB total uncompressed).
-4. Open a workout's **Details** to see its route trace, HR and elevation charts, splits and notes. Change workout type to **Race** for actual race efforts so that PR analytics and race-history prediction can use them.
+The experiment needs **60+ genuine labeled race rows** across enough distinct
+dates. Four privately inspected workouts are NOT a suitable training dataset.
 
-**Important limitations:** PaceLab does not currently auto-connect to COROS accounts, import ZIP archives directly, read daily sleep/HRV data, or guarantee full fidelity for every vendor-specific FIT field. Some export files may omit HR, GPS or lap data. Bad files are rejected with a reason; repeat imports are skipped. Original uploaded file bytes are not stored, but **reduced GPS coordinate samples are saved privately in your account**.
+From backend/:
 
-Official COROS instructions: [Export workout data](https://support.coros.com/hc/en-us/articles/360043975752-Exporting-Workout-Data-and-Uploading-to-3rd-Party-Apps) · [Bulk activity export](https://support.coros.com/hc/en-us/articles/25002333092500-Requesting-a-Bulk-Export-of-COROS-Data).
-
-## Race predictions: three different things
-
-1. **Riegel formula:** Convert a known result (e.g., 5K) to an equivalent time at another race distance using \`T2 = T1 * (D2 / D1)^1.06\`. Transparent and not personalized to your training.
-2. **Latest-race baseline:** Uses the latest \`Race\` workout from the previous year as the reference effort. This uses your actual history, but is still a formula baseline rather than trained machine learning.
-3. **Experimental trained ML model:** Only available after the operator provides a trusted, real-data-trained model. Its features can be auto-filled from the last 28 days of workouts. This endpoint otherwise returns a clear unavailable-model message.
-
-### Train a real dataset (not generated fake results)
-
-Sign in, mark actual races correctly, then select **Race predictor → Export real race-training CSV**. Each labeled row uses the **28 days strictly BEFORE the race**. If there aren't five preceding training workouts and an Easy/Recovery pace, the race is omitted. No race result or same-day workout enters its own features.
-
-From the \`backend/\` directory:
-
-\`\`\`bash
+~~~bash
 python -m pip install -r requirements-ml.txt
-python -m ml.train --csv path/to/real-race-training.csv --output models/race_rf.joblib
-\`\`\`
+python -m ml.train --csv path/to/private-training.csv --output models/race-model.joblib
+~~~
 
-Training currently requires **at least 60 real, labeled race records**, typically more than one runner's short history. Combine records only with appropriate permission. A date-grouped 70/15/15 split compares **median, ridge and random-forest** models. A previous-race Riegel comparator and a rolling-origin backtest report out-of-sample errors. Selection uses validation only; held-out test results include MAE, RMSE, event-level errors and empirical interval coverage. A `.metrics.json` report is saved next to the model artifact. This is a research experiment, not a clinically or athletically validated performance model.
+The trainer evaluates a median baseline, ridge regression, random forest,
+histogram gradient boosting and a compact neural network. It also compares a
+prior-race Riegel equivalent, uses rolling date-based backtests, reports
+held-out MAE/RMSE and event-level errors, and saves JSON metrics plus a
+human-readable **model card**. Permutation importance uses validation, not
+held-out test data. Intervals and model accuracy can fail under distribution
+shift. User/athlete-disjoint evaluation is still needed before generalizing
+across runners. Models must be trusted and manually configured on the backend.
 
-For Docker, place your own trusted artifact under \`backend/models/\`, and set \`PACELAB_MODEL_PATH=/app/models/race_rf.joblib\` in your root \`.env\`. Never use untrusted joblib artifacts (they can execute code when loaded). Models and raw training data are gitignored.
+## AI assistant
 
-## Assistant
+Without external credentials, the assistant explains data already recorded
+in the browser or authenticated account. In signed-in mode it returns links
+to recent supporting workouts, so answers can be checked. By default,
+no LLM provider is required. An optional externally configured provider
+receives the user's question and aggregated metrics, not raw routes, emails,
+workout notes or tokens. Athlete consent and a privacy notice are necessary
+before turning that on for other people.
 
-The **AI assistant** tab answers from logged statistics by default (mileage changes, easy pace, heart-rate summaries, hard workouts, race personal bests). It **does not invent workouts or claim to diagnose injuries**.
+## Public browser demo
 
-To opt into generative phrasing, set on the server:
+A **frontend-only GitHub Pages deployment workflow** is included at
+[Actions → Deploy static demo to GitHub Pages](https://github.com/dokeefe414/Pacelab/actions/workflows/pages-demo.yml).
 
-\`\`\`dotenv
-PACELAB_ASSISTANT_PROVIDER=openai
-PACELAB_ASSISTANT_MODEL=YOUR_RESPONSES_API_MODEL
-OPENAI_API_KEY=YOUR_SECRET_KEY
-\`\`\`
+To activate a live link, open the repository's Settings → Pages, select
+**GitHub Actions** as the source, and manually run that workflow. Its
+successful run provides the actual URL. Do not assume a site is published
+until the run succeeds. The static demo is functional with local synthetic
+data and a local deterministic assistant; authenticated imports require an
+independently deployed API and database.
 
-Restart the API. The provider receives only the user question and verified **aggregate statistics**; private GPS traces, workout notes, email addresses and credentials are not intentionally included. API use may incur provider costs; verify user consent and privacy obligations. Without these settings, deterministic answers work without an external API.
+## Quality checks
 
-## Workouts CSV
+~~~bash
+npm install
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
 
-For manual / local CSV import:
-
-\`\`\`csv
-date,type,distance_miles,duration,notes
-2026-11-02,Easy,5.2,41:30,Comfortable morning run
-2026-11-03,Intervals,4.5,31:00,Track workout
-\`\`\`
-
-Duration is \`MM:SS\` or \`HH:MM:SS\`; distance is in **miles**. This basic CSV does **not** preserve raw device traces, heart-rate samples, lap data or GPS, so keep your original FIT/GPX/TCX files for archival purposes.
-
-## Structure
-
-\`\`\`text
-index.html / styles.css
-src/
-  app.js                   Application shell, log and baseline calculator
-  api.js                   Authenticated backend HTTP client
-  core.js                  Workout time, CSV and aggregation utilities
-  intelligence.js          Activity details/imports, insights and assistant UI
-  intelligence-core.js     Training trend / route plotting utilities
-backend/
-  app/                     FastAPI routes, authentication, import, analytics
-  migrations/              Alembic database schema history
-  ml/                      Offline race model training/evaluation
-  tests/                   Auth, isolation, imports, analytics, training rows
-compose.yml                Local full stack
-compose.production.yml     HTTPS deployment reference with Caddy
-deploy/                    Deployment setup and security checklist
-.github/workflows/         Frontend and backend CI
-\`\`\`
-
-## Optional public portfolio demo
-
-For a browser-playable **frontend-only** demonstration, follow
-[GitHub Pages setup](docs/public-demo.md) and run the included manual
-deployment workflow. Sample workouts are synthetic; the browser-only statistics assistant works in demo mode, while backend accounts, FIT uploads and server-side LLM explanations require your own hosted API.
-
-## Tests and deployment
-
-\`\`\`bash
-npm install && npm test && npm run build
 cd backend
-pip install -r requirements-dev.txt
-python -m pytest -q
+python -m pip install -r requirements-dev.txt
+pytest -q
 alembic upgrade head
-\`\`\`
+~~~
 
-GitHub Actions also runs the frontend build and Python migration smoke test.
+GitHub Actions runs frontend tests/build, browser E2E, Python tests,
+database migrations, backup script syntax and Compose validation.
 
-See [Architecture & privacy](docs/architecture.md) and [Self-hosting requirements](deploy/README.md). Production hosting, account recovery, rate limiting, privacy policy, live integration testing and security hardening remain required before collecting other athletes' data online.
+## Security & operations
 
-**Roadmap:** stronger FIT compatibility, true COROS provider integration when authorized API access exists, calibrated ML evaluation with genuine datasets, privacy-preserving account deletion, secure hosted deployment, and polished mobile flows.
+A runner can export their **complete private account record** (including
+coordinates), or delete it from the active database. Older backups may
+retain data under your operator retention policy.
+
+See [privacy and operations](docs/privacy-and-operations.md),
+[self-hosting instructions](deploy/README.md),
+[architecture](docs/architecture.md) and
+[frontend-only demo guide](docs/public-demo.md).
+
+Production still requires domain, HTTPS, centralized multi-worker rate
+limits, account recovery/verification, token revocation/session hardening,
+monitoring and tested data-retention procedures. Do not host strangers'
+sensitive running data until those controls have been reviewed.

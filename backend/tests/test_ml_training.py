@@ -31,6 +31,11 @@ def test_training_pipeline_and_optional_inference(client, tmp_path, monkeypatch)
     assert report["training_rows"] > 0
     assert report["test_rows"] > 0
     assert report["test_mae_seconds"] >= 0
+    assert "hist_gradient_boosting" in report["validation_mae_seconds"]
+    assert "small_neural_net" in report["validation_mae_seconds"]
+    assert path.with_suffix(".model-card.md").exists()
+    assert path.with_suffix(".metrics.json").exists()
+    assert "validation_permutation_importance_mae_seconds" in report
     artifact = joblib.load(path)  # We made this artifact ourselves.
     assert artifact["demo"] is False  # Flag means the trainer doesn't fabricate real-world dataset.
     monkeypatch.setenv("PACELAB_MODEL_PATH", str(path))

@@ -15,6 +15,9 @@ def _public(workout):
         distanceMiles=workout.distance_miles, durationSeconds=workout.duration_seconds,
         notes=workout.notes, source=workout.source, startTime=workout.start_time,
         avgHeartRate=workout.avg_heart_rate, elevationGainMeters=workout.elevation_gain_meters,
+        elapsedSeconds=workout.elapsed_seconds, elevationLossMeters=workout.elevation_loss_meters,
+        maxHeartRate=workout.max_heart_rate, avgCadenceSpm=workout.avg_cadence_spm,
+        avgPowerWatts=workout.avg_power_watts,
     )
 
 
@@ -43,6 +46,11 @@ def persist_activity(activity, user: User, db: Session):
         source=activity["source"],source_hash=activity["sourceHash"],
         avg_heart_rate=activity["avgHeartRate"],
         elevation_gain_meters=activity["elevationGainMeters"],
+        elevation_loss_meters=activity["elevationLossMeters"],
+        elapsed_seconds=activity["elapsedSeconds"],
+        max_heart_rate=activity["maxHeartRate"],
+        avg_cadence_spm=activity["avgCadenceSpm"],
+        avg_power_watts=activity["avgPowerWatts"],
         laps_json=activity["laps"],track_json=activity["track"],
     )
     db.add(workout)
