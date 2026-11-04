@@ -79,3 +79,30 @@
 .evidence-run:hover{border-color:#b5f36c}.evidence-run strong{color:#b5f36c;white-space:nowrap}
 
 .portfolio-ribbon[hidden]{display:none}
+
+/* v0.6 performance center */
+.performance-heatmap{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;
+  grid-auto-columns:minmax(7px,1fr);gap:5px;overflow:hidden;margin:20px 0}
+.heatmap-day{display:block;border-radius:3px;border:1px solid #2b3b43;background:#1a2a34;
+  min-width:7px;min-height:12px}
+.heatmap-level-1{background:#3b674b}.heatmap-level-2{background:#5d9559}
+.heatmap-level-3{background:#8dc56b}.heatmap-level-4{background:#b5f36c}
+.heatmap-day.future{opacity:.20}
+.performance-chart{border-radius:12px;background:#152430;border:1px solid #2c4650;padding:14px;margin:16px 0}
+.performance-chart svg{width:100%;height:auto;display:block}
+.race-progress-entries{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+.race-progress-entries>div{display:flex;justify-content:space-between;gap:8px;padding:10px;
+  border:1px solid #35505a;border-radius:8px;font-size:12px;color:#aebfc5}
+.race-progress-entries strong{color:#c6f08b;font-variant-numeric:tabular-nums}
+.performance-compare-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.performance-compare-cards>div{border:1px solid #344957;border-radius:10px;padding:16px;display:grid;gap:7px}
+.performance-compare-cards span{font-size:12px;color:#9faeb8}
+.performance-compare-cards strong{font-size:12px;color:#cdf798}
+@media (max-width:580px){
+ .performance-heatmap{gap:3px;grid-template-rows:repeat(7,10px)}
+ .performance-compare-cards{grid-template-columns:1fr}
+ .race-progress-entries{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;
+  animation-duration:.01ms!important;transition-duration:.01ms!important}}
+:focus-visible{outline:3px solid #c0f58c;outline-offset:3px}
