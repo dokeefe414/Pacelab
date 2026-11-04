@@ -223,7 +223,7 @@ async function askTrainingAssistant(event){
     const result=await askAssistant(input.value.trim());
     answer.textContent=result.answer;
     $('#assistant-supporting-workouts').innerHTML=(result.supportingWorkouts||[]).length?
-      '<h3>Workouts supporting this summary</h3>'+result.supportingWorkouts.map(w=>
+      '<h3>Selected relevant workouts</h3><p class="body-copy">'+escapeHTML(result.evidenceNote||'Representative records behind your statistics.')+'</p>'+result.supportingWorkouts.map(w=>
         '<button class="evidence-run" type="button" data-open="'+escapeHTML(w.id)+'">'+
         '<span>'+escapeHTML(w.date)+' · '+escapeHTML(w.type)+'</span><strong>'+
         Number(w.distanceMiles).toFixed(2)+' mi</strong></button>').join(''):

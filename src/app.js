@@ -1,4 +1,5 @@
 import {initTour} from './tour.js';
+import {initPerformance,renderPerformance} from './performance.js';
 import {KEY,parseTime,formatTime,predictRace,validateWorkout,paceSeconds,lastWeeks,summarize,toCSV,parseCSV,sampleWorkouts} from './core.js';
 import {initIntelligence,renderIntelligence} from './intelligence.js';
 import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction,downloadAccountData,permanentlyDeleteAccount} from './api.js';
@@ -11,11 +12,13 @@ function persist(){if(apiIsConnected()) throw Error('Account workouts must be sa
 async function refreshRemote(){workouts=(await fetchWorkouts()).map(w=>({...w,...validateWorkout(w)}));usingSample=false;render();}
 function syncMode(){const connected=apiIsConnected();$('#account-button').textContent=connected?'Account: '+apiUser().email:'Sign in / Create account';$('#account-status').textContent=connected?'● Synced to account':'● Local-only workspace';$('#reset-data').hidden=connected;$('#sample-banner').hidden=connected||!usingSample;}
 function showAccountDialog(){
-  if(!apiIsConnected() && window.location.hostname.endsWith('.github.io') && getApiBase()==='/api'){
-    toast('This public preview has no account server. Explore the sample data or connect your own HTTPS PaceLab API.');
-    return;
-  }
-  if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}$('#auth-error').textContent='';$('#api-base').value=getApiBase();$('#account-dialog').showModal();}
+  if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}const staticPreview=window.location.hostname.endsWith('.github.io');
+  const needsApi=staticPreview && getApiBase()==='/api';
+  $('#auth-error').textContent=needsApi?
+    'The public demo does not provide accounts. To sign in, enter a separately hosted HTTPS PaceLab API address below.':
+    '';
+  $('#api-base').value=needsApi?'':getApiBase();
+  $('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
@@ -29,7 +32,7 @@ function renderLists(){const rows=sorted();$('#recent-workouts').innerHTML=rows.
 function renderBreakdown(){const counts={};workouts.forEach(w=>counts[w.type]=(counts[w.type]||0)+w.distanceMiles);const total=Object.values(counts).reduce((a,b)=>a+b,0);$('#type-breakdown').innerHTML=total?Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([type,miles])=>'<div class="breakdown-row"><div class="breakdown-label"><strong>'+escapeHTML(type)+'</strong><span>'+miles.toFixed(1)+' mi · '+Math.round(miles/total*100)+'%</span></div><div class="progress"><div style="width:'+(miles/total*100)+'%"></div></div></div>').join(''):'<div class="empty">Log workouts to see training distribution.</div>';}
 function renderInsights(){const weeks=lastWeeks(workouts);renderBars($('#consistency-chart'),weeks,'activities','activities');const active=weeks.filter(w=>w.activities);const avg=active.length?active.reduce((s,w)=>s+w.miles,0)/active.length:0;const latest=weeks[weeks.length-1].miles;$('#insight-text').innerHTML='<p><strong>'+active.length+' of 8</strong> weeks include logged workouts.</p><p>Average mileage in active weeks: <strong>'+avg.toFixed(1)+' miles</strong>.</p><p>This week so far: <strong>'+latest.toFixed(1)+' miles</strong>.</p><p class="muted">Partial weeks and missing workouts affect trends. These are descriptive statistics, not training or medical advice.</p>';}
 function renderPrediction(){try{const t=parseTime($('#reference-time').value);const d=Number($('#reference-distance').value);const target=Number($('#target-distance').value);const exponent=Number($('#riegel-exponent').value);const result=predictRace(t,d,target,exponent);$('#prediction-result').innerHTML='<div class="prediction-output"><span>ESTIMATED FINISH TIME</span><strong>'+formatTime(result)+'</strong><small>Formula baseline based on '+formatTime(t)+' reference performance. Not personalized to your training.</small></div>';$('#prediction-teaser').innerHTML='<div class="teaser-time">'+formatTime(predictRace(t,d,5000,exponent))+'</div><p>5K equivalent · based on a manually entered reference performance</p><span class="teaser-tag">FORMULA BASELINE</span>';}catch(e){$('#prediction-result').innerHTML='<p class="error">'+escapeHTML(e.message)+'</p>';$('#prediction-teaser').innerHTML='<div class="empty">Enter a valid reference race to estimate a 5K equivalent.</div>';}}
-function render(){renderMetrics();renderBars($('#mileage-chart'),lastWeeks(workouts));renderLists();renderBreakdown();renderInsights();renderPrediction();$('#sample-banner').hidden=apiIsConnected()||!usingSample;$('#portfolio-ribbon').hidden=apiIsConnected()||!usingSample;syncMode();renderIntelligence();}
+function render(){renderMetrics();renderBars($('#mileage-chart'),lastWeeks(workouts));renderLists();renderBreakdown();renderInsights();renderPrediction();$('#sample-banner').hidden=apiIsConnected()||!usingSample;$('#portfolio-ribbon').hidden=apiIsConnected()||!usingSample;syncMode();renderIntelligence();renderPerformance();}
 function openDialog(){const d=new Date();$('#w-date').value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');$('#form-error').textContent='';$('#workout-form').reset();$('#w-date').value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');$('#workout-dialog').showModal();}
 $$('[data-view]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.view)));$$('[data-nav]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.nav)));$$('[data-add]').forEach(el=>el.addEventListener('click',openDialog));$('#add-workout').addEventListener('click',openDialog);$('#close-dialog').addEventListener('click',()=>$('#workout-dialog').close());$('#menu-toggle').addEventListener('click',()=>$('.sidebar').classList.toggle('open'));$('#search-workouts').addEventListener('input',renderLists);$('#filter-type').addEventListener('change',renderLists);
 $('#workout-form').addEventListener('submit',async e=>{e.preventDefault();try{const run=validateWorkout({date:$('#w-date').value,type:$('#w-type').value,distanceMiles:$('#w-distance').value,durationSeconds:parseTime($('#w-duration').value),notes:$('#w-notes').value});if(apiIsConnected()){await createRemoteWorkout(run);await refreshRemote();}else{realWorkouts();workouts.push(run);persist();}$('#workout-dialog').close();toast('Workout saved!');}catch(err){$('#form-error').textContent=err.message;}});
@@ -65,6 +68,7 @@ $('#delete-account-form').addEventListener('submit',async event=>{
 $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#account-submit');btn.disabled=true;$('#auth-error').textContent='';try{setApiBase($('#api-base').value);const action=$('input[name="auth-action"]:checked').value;await authenticate(action,$('#auth-email').value,$('#auth-password').value);try{await refreshRemote();}catch(err){logout();throw err;}$('#account-dialog').close();$('#auth-password').value='';toast('Connected to your private workout account.');}catch(err){$('#auth-error').textContent=err.message;}finally{btn.disabled=false;}});
 initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample});
 initTour(nav);
+initPerformance({getWorkouts:()=>workouts});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());
 load();render();
 if(hasSavedSession())restoreSession().then(async user=>{if(user){try{await refreshRemote();toast('Account session restored.');}catch(err){logout();load();render();toast('Could not restore account data: '+err.message);}}}).catch(console.error);

@@ -1,93 +1,135 @@
-# PaceLab engineering architecture — v0.3
+# PaceLab architecture and data flow — v0.6
 
-\`\`\`mermaid
+## System boundary
+
+PaceLab offers two intentionally different products: a **public, synthetic
+browser demo** and a **self-hosted, authenticated full-stack service**.
+A GitHub Pages site cannot itself run PostgreSQL, a Python API or private
+FIT/GPX/TCX server uploads. The live public preview does not imply those
+capabilities are hosted.
+
+```mermaid
 flowchart TB
-  COROS[User-exported COROS FIT / GPX / TCX] --> WEB[Browser: dashboard + import]
-  WEB -->|Bearer token over HTTPS in deployment| API[FastAPI /api]
-  WEB -->|Local demo only| LOCAL[localStorage]
-  API --> AUTH[Argon2 hash / JWT user identity]
-  API --> PARSER[Size-limited FIT / XML parsing]
-  PARSER --> DEDUP[File SHA-256 and cross-format duplicate checks]
-  DEDUP --> DB[(PostgreSQL / SQLite dev)]
-  API --> STATS[Account-scoped analytics and personal bests]
-  STATS --> ASSIST[Deterministic assistant]
-  ASSIST -->|Opt-in aggregates, no GPS| LLM[External Responses API]
-  DB --> EXPORT[Per-account pre-race feature CSV]
-  EXPORT --> TRAIN[Offline temporal validation ML trainer]
-  TRAIN -->|Trusted artifact only| MODEL[Experimental inference API]
-  API --> WEB
-\`\`\`
+  C[Visitor / athlete browser]
+  B[GitHub Pages static demo]
+  L[(Browser localStorage)]
+  H[Private HTTPS host: Caddy]
+  N[Nginx SPA / API reverse proxy]
+  A[FastAPI authentication and data services]
+  D[(PostgreSQL)]
+  U[User-exported FIT / GPX / TCX / ZIP]
+  S[Deterministic account analytics]
+  X[Optional external AI API]
+  M[Offline real-race experiment]
+  C -->|Visit synthetic demo| B
+  B -->|Local workouts only| L
+  C -->|Authenticated HTTPS| H
+  H --> N
+  N --> A
+  U -->|User-approved, bounded import| A
+  A -->|Owner-scoped records| D
+  D --> S
+  S --> A
+  A -->|Opt-in aggregate-only prompt| X
+  D -.->|Private labeled CSV export| M
+  M -.->|Trusted operator artifact only| A
+```
+
+## Layers
+
+| Layer | Implementation | Responsibility |
+|---|---|---|
+| UI | HTML, CSS, JavaScript ES modules | Dashboard, race formula, charts, local sample mode |
+| Pure analytics | src/core.js, intelligence-core.js, performance.js | Pace/time, week bins, consistency, PR history |
+| API client | src/api.js | Account token, authenticated workout requests |
+| API | backend/app/main.py and routers | Validation, identity, import, insights and predictions |
+| Persistence | SQLAlchemy, PostgreSQL / development SQLite | User-owned workout and sensor records |
+| Schema lifecycle | Alembic 0001/0002/0003 | Add account, activity and running-dynamics fields |
+| Research | backend/ml | Offline chronological model experiments |
+| Operations | Compose, Nginx, Caddy | Local services, HTTPS reference, readiness and backups |
 
 ## Data model
 
-- **User:** email (unique), Argon2 password hash, creation timestamp, UUID.
-- **Workout:** owner UUID, date, type, distance (miles), duration (seconds), notes,
-  optional start time, source format, source-file SHA-256, average HR,
-  ascent meters, lap JSON, downsampled track JSON.
-- Unique composite index on \`(user_id, source_hash)\` permits manual workouts
-  with null hashes while preventing duplicate uploads of the same bytes.
-- The full GPX/FIT/TCX file is not retained; imported private route points
-  are capped at 500 sampled points per workout. They may still reveal home
-  locations and must remain protected.
+### User
 
-Database revisions:
-- \`0001_accounts_workouts\`
-- \`0002_activity_detail\`
+- Random primary key and unique normalized email
+- Argon2 password hash; **no plaintext passwords are stored**
+- Timestamps and relationships to owned workouts
 
-Migrations use Alembic rather than runtime auto-create. Local app uses SQLite
-by default; Docker uses PostgreSQL and separate DB credentials to safely
-encode special characters in passwords.
+### Workout
 
-## Authentication and isolation
+- Owner user ID, date, type, duration in integer seconds, distance in miles
+- Optional notes, source format, start timestamp and source hash
+- Optional average and maximum heart rate, elevation gain/loss, cadence, power
+- Session **timer/moving time** and separate **elapsed time** when available
+- Device lap JSON and downsampled private track JSON (up to 500 points)
 
-- Short-lived JWT bearer access token, tab-scoped session storage on web.
-- Every account-specific endpoint derives the owner from verified token.
-- GET/PUT/DELETE workout detail checks owner, returning 404 cross-user.
-- Import checks size, format, duplicate hashes and matching start/distance. ZIP imports are read from memory without extracting paths to disk; per-file and total expansion limits mitigate compressed-file abuse.
-- Static web server never stores the API signing secret or LLM API key.
-- Public registration defaults to off in production; operator account creation
-  is interactive and password is never part of CLI arguments.
+Hashes prevent identical file re-imports; start-time/distance/duration matching
+helps detect equivalent files exported in multiple formats. A hash is not
+a public athlete identifier and must not replace authentication.
 
-These are useful engineering controls, **not a complete security review**:
-rate limiting, refresh/revocation, cookie hardening, user deletion, backup/restore,
-privacy consent, and an incident response system are still missing.
+## Data provenance and units
 
-## Analytics interpretation
+A FIT session may include moving/timer time that differs from wall-clock
+elapsed time because of pauses; that distinction must survive upload to
+database to browser chart. Recorded device laps can vary in length. Pace
+per mile is normalized for comparisons, but is not a substitute for the
+original device split. A missing heart-rate, power or elevation field is
+**unknown**, not zero. FIT missing-value sentinels are filtered.
 
-Training totals are descriptive. The 12-week illustrative effort proxy uses
-\`duration_minutes × weight(workout_type)\`, e.g., Easy=1.0, Tempo=1.35,
-Intervals=1.5; it is **not** TRIMP, a validated fatigue score, or advice on
-training safety. Personal bests are only from runs explicitly labeled \`Race\`
-and close to standard 800m/Mile/3K/5K/8K/10K distances.
+Each imported source file is parsed in memory and discarded. Reduced GPS
+coordinates are still private data and can reveal a runner's location. Never
+place real FIT data into CI fixtures or a public demo.
 
-The default assistant uses deterministic answers from data in the user's
-account; optional external LLM requests include a compact aggregate-only
-statistics object and the question, not notes or coordinates. The system
-instruction prohibits fabricated observations, but language models may still
-make errors; verify any claims against the visible metrics.
+## Trust and privacy boundaries
 
-## Leakage prevention in race modeling
+1. The visitor's GitHub Pages browser data stays in that browser unless
+   the visitor explicitly configures a separate HTTPS backend.
+2. Server API requests validate JWT and derive user identity server-side.
+   A supplied workout ID is checked against the authenticated owner.
+3. Imports enforce content type, bounded bytes and bounded ZIP expansion;
+   XML parsing uses defensive parsing to reject entities.
+4. The assistant is deterministic by default. Its optional language-model
+   integration sends only the question and verified aggregate metrics,
+   never raw GPS, notes, authentication headers or the user's email.
+5. A trusted locally created model artifact is configured only by an operator.
+   Joblib is not a safe format for untrusted uploads.
+6. Private backup archives may retain deleted workout records until the
+   operator's retention process expires and are encrypted separately.
 
-Each export row is generated from workouts occurring **strictly before** the
-race date. Same-day sessions are excluded because time order may be unknown.
-Features: 4-week mean mileage, Easy/Recovery pace, hard-session count, longest
-run. Label: real recorded race duration.
+The existing rate guard is **in-process**, not a distributed anti-abuse
+guarantee. Browser bearer tokens do not provide independent server-side
+revocation. Public release requires those and the other controls documented
+in [SECURITY.md](../SECURITY.md).
 
-The offline model applies date-based train/validation/test splits. Validation
-chooses between median baseline and forest, while an absolute-residual interval
-uses split-conformal-like quantiles. Test MAE and empirical coverage are
-measured on a held-out later partition. Calibration can fail under time or
-athlete distribution shift; it is not a reliability guarantee. Data
-requirements, athlete consent, external generalization and sport-specific
-normalization remain research problems.
+## Analysis and scientific interpretation
 
-## Deployment
+Training-volume summaries are descriptive. The weighted-minutes chart uses
+arbitrary type weights; it is **not** TRIMP, a physiological recovery score,
+or a recommendation on injury risk. Heart-rate bands are fixed absolute
+buckets, not personally calibrated zones. Race time equivalents use Riegel's
+formula and do not claim individualized ML validation.
 
-- Local: Docker Compose (Nginx frontend, FastAPI, PostgreSQL).
-- Example internet-facing beta: [compose.production.yml](../compose.production.yml)
-  with Caddy HTTPS; domain and DNS are required.
-- Only Caddy publishes ports 80/443 in the production example.
-- Never expose Python, PostgreSQL, raw model artifacts or signing secrets
-  publicly; use network isolation and a proper backup strategy.
+The optional model export uses **only workouts strictly before each race**.
+The offline trainer uses date-grouped train/validation/test partitions and
+additional expanding-window tests. See [ML methodology](ml-methodology.md).
 
-See [Deployment checklist](../deploy/README.md).
+## API and deployments
+
+- [API reference](api.md)
+- [Self-hosting runbook](../deploy/README.md)
+- [Security policy](../SECURITY.md)
+- [Tests and CI](testing.md)
+
+### Deployment topology
+
+```text
+Public demo:
+    GitHub Pages -> index.html, styles.css, src/ -> browser localStorage
+Self-hosted private beta:
+    Internet HTTPS -> Caddy:443 -> Nginx -> FastAPI -> PostgreSQL
+                                                       |
+                                       authorized private export/backup
+```
+
+The API and database are **not publicly available** on the GitHub Pages demo.

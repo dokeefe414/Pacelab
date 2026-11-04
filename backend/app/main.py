@@ -24,7 +24,7 @@ from .prediction import router as prediction_router
 from .schemas import AuthResponse, LoginRequest, PublicUser, RegisterRequest, WorkoutPayload, WorkoutResponse, WorkoutDetailResponse
 from .security import create_access_token, password_hash, verify_password
 
-app = FastAPI(title="PaceLab API", version="0.5.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="PaceLab API", version="0.6.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 origins = [x.strip() for x in os.getenv("PACELAB_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 app.middleware("http")(security_middleware)

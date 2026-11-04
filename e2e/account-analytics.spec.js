@@ -39,7 +39,8 @@ test('signed-in activity details and assistant evidence use actual response fiel
   await page.goto('/');
   await expect(page.locator('#account-button')).toContainText('runner@example.test');
   await page.locator('[data-view="workouts"]').click();
-  await page.locator('[data-open="'+activity.id+'"]').first().click();
+  // Target the visible workout-list row. The dashboard has an identical, hidden row.
+  await page.locator('#workout-list [data-open="'+activity.id+'"]').click();
   await expect(page.locator('#activity-dialog')).toBeVisible();
   await expect(page.locator('#activity-detail')).toContainText('Timer');
   await expect(page.locator('#activity-detail')).toContainText('Elapsed');
