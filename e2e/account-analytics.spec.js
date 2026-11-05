@@ -48,6 +48,14 @@ test('signed-in activity details and assistant evidence use actual response fiel
   await expect(page.locator('#activity-detail')).toContainText('Cadence');
   await expect(page.locator('#activity-detail')).toContainText('Heart-rate distribution');
   await expect(page.locator('#activity-detail')).toContainText(/normalized split pace/i);
+  await expect(page.locator('#studio-sensor-select')).toBeVisible();
+  await expect(page.locator('#studio-lap-panel')).toHaveCount(0);
+  await expect(page.locator('.studio-lap-table tbody tr')).toHaveCount(2);
+  await page.locator('#studio-sensor-select').selectOption('powerWatts');
+  await expect(page.locator('#studio-sensor-chart')).toContainText('Running power');
+  await expect(page.locator('#studio-sensor-chart svg')).toBeVisible();
+  await page.locator('#studio-sensor-select').selectOption('heartRate');
+  await expect(page.locator('#studio-sensor-chart')).toContainText('Heart rate');
   await page.locator('#close-activity').click();
   await page.locator('[data-view="assistant"]').click();
   await page.locator('#assistant-question').fill('How many miles have I logged?');

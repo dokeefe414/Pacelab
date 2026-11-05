@@ -82,3 +82,13 @@ approve the Blueprint's resources and costs, provision an operator-controlled
 private account, verify migrations, and complete a security and backup
 review. **No live hosting, billing or cloud deployment is implied by these
 repository files.** See [browser import guidance](browser-import.md).
+
+## v0.9 status
+
+The publicly available Athlete Studio visualizations, local workout import
+and browser backup features do **not** depend on a cloud host.
+The Render Blueprint still requires a connected account, explicit pricing
+approval, provisioning, independent security review, monitoring and
+backup verification before private accounts can be advertised as live.
+
+See the [production beta release gates](production-beta-checklist.md).

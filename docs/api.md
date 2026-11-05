@@ -1,4 +1,4 @@
-# PaceLab REST API — v0.7
+# PaceLab REST API — v0.9
 
 Base path: **/api** on a separately deployed FastAPI service.
 A standalone GitHub Pages demo has **no** hosted API.
@@ -27,7 +27,7 @@ from login or registration. The browser keeps it in sessionStorage.
 | DELETE | /workouts/{id} | Yes | Delete owned workout |
 | POST | /activities/import | Yes | One FIT, GPX or TCX (10 MB limit) |
 | POST | /activities/import-bulk | Yes | Bounded ZIP of supported activities |
-| GET | /insights/summary | Yes | Aggregated facts and recent history |
+| GET | /insights/summary | Yes | Aggregated facts, recent history, six monthly totals and completed four-week comparison |
 | POST | /assistant/ask | Yes | Grounded answer and selected relevant workouts |
 | POST | /predict/riegel | No | Mathematical race-equivalence baseline |
 | GET | /predict/history | Yes | Last recorded Race equivalent |
@@ -178,3 +178,19 @@ by design. Opt-in applies to only that question.
 label counts, distinct race dates, per-event counts and the minimum
 requirements for an experiment. This endpoint does not train or validate
 a model. The authenticated CSV export remains private.
+
+## Athlete Studio response fields (v0.9)
+
+The authenticated **GET /insights/summary** response includes
+`athleteStudio.monthly`, six months of calendar-bucket summaries
+with month label, partial flag, logged mileage, total minutes,
+workout/race counts, distance-weighted easy pace (or null) and
+percentage of workouts carrying an average recorded HR.
+
+`athleteStudio.completedFourWeekComparison` returns the earlier and
+most-recent four **completed** Monday–Sunday weeks, their mileage
+difference, and a warning that missing logs cannot be treated as rest.
+
+These endpoints remain owner-scoped. The public Pages app derives the
+same concepts directly from browser-local workouts and does not make
+a server request for them. See [Athlete Studio definitions](athlete-studio.md).

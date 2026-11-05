@@ -18,7 +18,9 @@ npm run check:docs
 Tests use Node's built-in test runner. They cover time and pace formulas,
 local summaries, route/trace transformations, training-calendar dates,
 race-event filtering, workout comparisons, **FIT checksum/invalid-value
-handling**, source-coordinate exclusion, and prior-date-only race features.
+handling**, source-coordinate exclusion, prior-date-only race features,
+calendar-month and completed-week analytics, comparable device laps,
+and sensor-series missing-value rejection.
 
 The Vite build serves as a production bundle check, but GitHub Pages can
 also serve the source directly from the root in static demo mode.
@@ -37,8 +39,13 @@ single-file import, duplicate detection, persistence across reload, editing
 an imported session's Race type, and **zero API requests**.
 
 An authenticated integration test mocks a **fictional** API account and a
-synthetic workout to verify the detail dialog, HR/cadence/power charts
-and grounded assistant evidence without using a real account.
+synthetic workout to verify the detail dialog, selectable
+HR/cadence/power charts, distance-aware Lap Lab and grounded assistant
+evidence without using a real account.
+
+The Athlete Studio browser suite verifies 3/6/12-month chart selection,
+weekly mileage/Easy pace changes, and mobile navigation states with
+Escape/backdrop dismissal. These tests use fictional data only.
 
 ### Regression: invisible workout detail button
 
@@ -143,3 +150,14 @@ account deletion and HTTPS/CORS from a real browser. Check private backup
 retention separately. CI alone is not a production security audit.
 
 See [optional Render deployment](render-deployment.md).
+
+## v0.9 ML reliability diagnostics
+
+The backend tests cover the Wilson descriptive coverage estimate,
+post-holdout feature-range drift and minimum per-event sample support.
+These are report-only diagnostics; they are not a substitute for
+prospective or athlete-disjoint evaluation. The JSON/model-card outputs
+contain no original FIT files, routes or athlete identifiers.
+
+See [Athlete Studio](athlete-studio.md) and
+[ML methodology](ml-methodology.md) for definitions and limitations.

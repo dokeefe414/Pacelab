@@ -3,6 +3,27 @@
 Versions describe repository capabilities, **not** public production
 deployment or race-model validation. See README for the current limits.
 
+## v0.9 — Athlete Studio and evidence-first research (2026-11)
+
+- Rebuilt the athlete analytics experience with a monthly 3/6/12-month
+  mileage view and an interactive 12-week mileage/Easy pace chart.
+- Added *fair completed-week* four-week volume comparisons excluding
+  the partial current week; no projected training sessions.
+- Added selectable recorded telemetry charts (heart rate, cadence, power,
+  elevation, segment pace) with sample coverage and no invented readings.
+- Added distance-aware device Lap Lab: normalized lap pace, recoveries
+  separated from comparable efforts, descriptive pace variability.
+- Improved mobile navigation with backdrop, Escape dismissal,
+  aria-expanded state and accessible form/chart labels.
+- Extended authenticated insights to include server-computed monthly
+  statistics and completed-week comparisons, with unit tests.
+- Added held-out interval-coverage uncertainty diagnostics, descriptive
+  range-drift measurements and minimum support for per-event ML errors.
+- Expanded browser, backend, research and mobile regressions, documentation
+  and a production release-gate checklist.
+- **Public browser features are live when deployment succeeds.** Hosted
+  accounts, external COROS sync and validated ML forecasts are not claimed.
+
 ## v0.8 — privacy-first real-workout browser app (2026-11)
 
 - Added client-side FIT/GPX/TCX decoding with checksum/field validation,

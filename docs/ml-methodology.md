@@ -100,9 +100,24 @@ test set would violate the holdout's purpose.
 | MAE (seconds) | Typical absolute prediction error |
 | RMSE (seconds) | More sensitivity to large misses |
 | Per-event error | A pooled score can hide 800m vs 8K differences |
-| Empirical interval coverage | Tests how often claimed intervals contain outcomes |
+| Empirical interval coverage | Observed fraction of held-out outcomes covered, with Wilson 95% descriptive uncertainty |
+| Feature range drift | Fraction of held-out features outside prior training ranges; inspect after evaluation, never use for selecting a model |
+| Per-event minimum support | Suppress MAE when fewer than five test races exist for a distance |
 | Riegel/median comparisons | A complex model should earn its extra complexity |
 | Validation permutation importance | Association with forecast error, **not causation** |
+
+The v0.9 research pipeline adds a **Wilson 95% interval around the
+observed coverage proportion**. This measures uncertainty in the empirical
+coverage statistic, not a 95% interval for a future race. The calculation
+assumes independent trials; multiple races from the same athlete are
+correlated, so even this descriptive interval can be optimistic.
+
+The pipeline also reports (a) how many held-out feature values lie
+outside each earlier training feature range and (b) per-event MAE only
+when at least five held-out outcomes exist. The first is a crude
+range diagnostic, **not** a validated change-point or drift detector.
+Neither post-holdout statistic may be used to pick or tune the model,
+because doing so would invalidate the test-set independence.
 
 A symmetric residual-derived interval is not a calibrated guarantee under
 future distribution shift; with small datasets, its uncertainty is substantial.

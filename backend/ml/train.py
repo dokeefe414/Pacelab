@@ -20,6 +20,7 @@ from sklearn.inspection import permutation_importance
 from datetime import date
 from pathlib import Path
 from .evaluate import chronological_backtest, grouped_dates, model_candidates, predict_riegel_from_training, numerical_metrics
+from .reliability import interval_coverage_report, feature_drift, event_error_support
 
 FEATURES = [
     "event_meters", "weekly_miles_4w", "average_easy_pace_seconds_per_mile",
@@ -91,14 +92,8 @@ def train(csv_path, output_path):
     known=[(actual,pred) for actual,pred in zip(test_y,riegel_predictions) if pred is not None]
     riegel_mae=float(mean(abs(y-p) for y,p in known)) if known else None
     test_median=round(float(mean_absolute_error(test_y,models["median_baseline"].predict(test_x))),2)
-    events={}
-    for meters in sorted(set(float(r[1][0]) for r in test_rows)):
-        indices=[i for i,r in enumerate(test_rows) if float(r[1][0])==meters]
-        if indices:
-            events[str(int(meters))]={
-                "n":len(indices),
-                "mae_seconds":round(float(np.mean(np.abs(test_y[indices]-predictions[indices]))),2),
-            }
+    # Suppress unstable per-event MAE when fewer than five held-out results exist.
+    events=event_error_support(test_rows,list(predictions),min_support=5)
     backtest=chronological_backtest(rows)
     from .athlete_groups import athlete_disjoint_evaluation
     athlete_evaluation=athlete_disjoint_evaluation(csv_path)
@@ -130,6 +125,9 @@ def train(csv_path, output_path):
         "test_median_baseline_mae_seconds":test_median,
         "test_riegel_baseline_mae_seconds":round(riegel_mae,2) if riegel_mae is not None else None,
         "test_interval_coverage":round(coverage,3),
+        "interval_coverage_reliability":interval_coverage_report(list(test_y),list(predictions),half_width),
+        "post_holdout_feature_drift":feature_drift(train_rows,test_rows,FEATURES),
+        "test_event_support":events,
         "interval_half_width_seconds":round(half_width,2),
         "test_per_event":events,
         "rolling_backtest":backtest,
@@ -139,6 +137,9 @@ def train(csv_path, output_path):
             "Single-athlete data may not generalize to other runners.",
             "Repeated athletes pooled without an athlete-disjoint split may inflate generalization.",
             "Intervals are empirical and may fail under future changes in performance.",
+        "Reported Wilson coverage bounds are descriptive and assume independent trials; repeated athlete races violate this assumption.",
+        "Per-event MAE is suppressed when fewer than five held-out events exist.",
+        "Training-range drift is a post-holdout diagnostic, not a model-selection signal.",
             "Models are exploratory; no clinical or athletic validation is claimed."
         ]
     }
@@ -169,7 +170,10 @@ def train(csv_path, output_path):
         f"Held-out later-date test MAE: **{test_mae:.2f} seconds**.\n\n"
         f"Median baseline MAE: **{test_median:.2f} seconds**.\n\n"
         f"Riegel prior-race comparator MAE: **{riegel_mae:.2f} seconds**.\n\n"
-        f"Observed 90% interval coverage: **{coverage:.1%}**; "
+        f"Observed nominal 90% interval coverage: **{coverage:.1%}**; "
+        f"Wilson 95% descriptive range: "
+        f"**{report['interval_coverage_reliability']['wilson_95_lower']:.1%}–"
+        f"{report['interval_coverage_reliability']['wilson_95_upper']:.1%}**; "
         f"estimated interval half-width: {half_width:.1f} seconds. "
         "Nominal intervals are not distribution-shift guarantees.\n\n"
         "## Features\n"

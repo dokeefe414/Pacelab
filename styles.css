@@ -152,3 +152,81 @@
 .local-backup-actions>*{font-size:12px;min-height:42px;display:inline-flex;align-items:center;justify-content:center}
 @media(max-width:760px){.local-backup-panel{flex-direction:column;align-items:stretch;gap:12px}
   .local-backup-actions{flex-direction:column}.local-backup-actions>*{width:100%}}
+
+/* v0.9 Athlete Studio — a structured performance surface */
+:root{color-scheme:dark}
+.nav-backdrop[hidden]{display:none}
+.nav-backdrop{position:fixed;inset:0;z-index:9;background:rgba(3,10,17,.68);
+  border:0;backdrop-filter:blur(5px);cursor:pointer}
+.studio-section{margin:28px 0}
+.studio-section-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:0 0 19px}
+.studio-section-heading h2{font:700 clamp(24px,3vw,32px) 'Space Grotesk',sans-serif;
+  letter-spacing:-.8px;margin:7px 0}
+.studio-section-heading .body-copy{max-width:720px;margin:4px 0 0}
+.studio-version{color:#bcf78e;font-size:10px;letter-spacing:1.7px;font-weight:800;
+  padding:9px 14px;border:1px solid #426b47;background:#183025;border-radius:999px;white-space:nowrap}
+.studio-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
+.studio-grid .panel{background:linear-gradient(165deg,#142434,#111c29 68%)}
+.studio-month-panel,.studio-week-panel{min-height:380px}
+.studio-select-label{font-size:11px;color:#b5c6c5;display:grid;gap:6px;min-width:112px}
+.studio-select-label select{color:#e9f5df;background:#1a2d36;border:1px solid #375568;
+  border-radius:7px;padding:8px 9px;font-size:12px;max-width:180px}
+.studio-month-bars{height:215px;display:flex;gap:12px;align-items:stretch;margin:12px 0 20px}
+.studio-month{min-width:0;flex:1;display:flex;align-items:center;flex-direction:column;gap:5px}
+.studio-month-figure{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.studio-month-figure span{font-size:10px;color:#8eacba;margin-left:3px}
+.studio-month-rail{width:100%;max-width:53px;flex:1;display:flex;align-items:end;
+  border-bottom:1px solid #455e62;background:linear-gradient(0deg,rgba(69,115,81,.11),transparent)}
+.studio-month-bar{width:100%;background:linear-gradient(180deg,#d5ff8c,#64b38d);
+  border-radius:7px 7px 0 0;box-shadow:0 0 17px rgba(155,225,115,.15)}
+.studio-month-label{color:#dbe8e7;font-size:12px;font-weight:700}
+.studio-month small{font-size:10px;color:#819aa5}
+.studio-line-wrap{padding:10px;border-radius:12px;border:1px solid #2c4853;
+  background:linear-gradient(160deg,#10202c,#132a31)}
+.studio-line-wrap svg{width:100%;height:auto;display:block}
+.studio-chart-legend{display:flex;justify-content:space-between;gap:12px;color:#8da7b5;
+  font-size:11px;margin:10px 0 18px}
+.studio-hint{border-left:2px solid #83c86e;padding-left:12px}
+.studio-explorer,.studio-lap-panel{margin:22px 0;padding:20px;border:1px solid #36505c;
+  border-radius:12px;background:linear-gradient(170deg,#142834,#13212c)}
+.studio-explorer h3,.studio-lap-panel h3{font:700 21px 'Space Grotesk',sans-serif;margin:6px 0}
+.studio-explorer-heading{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:18px}
+.studio-explorer-heading label{color:#bdd2c5;font-size:11px;display:grid;gap:6px}
+.studio-explorer-heading select{background:#1f3441;color:#f4f7f2;border:1px solid #496577;
+  padding:9px;border-radius:9px;min-height:41px}
+.studio-detail-chart svg{display:block;width:100%;background:linear-gradient(140deg,#10202d,#142833);
+  border:1px solid #34505d;border-radius:10px;max-height:310px}
+.studio-detail-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.studio-detail-stats span{display:grid;gap:5px;background:#1c3440;border:1px solid #345362;
+  padding:12px;border-radius:9px;color:#adc0c7;font-size:11px}
+.studio-detail-stats strong{color:#cffb9b;font:700 18px 'Space Grotesk',sans-serif}
+.studio-lap-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:15px 0}
+.studio-lap-facts span{display:grid;gap:4px;padding:12px;background:#18323b;border-radius:9px;
+  color:#a6c1c9;font-size:11px}
+.studio-lap-facts strong{font-size:20px;color:#b7f484}
+.studio-lap-table-wrap{overflow:auto;max-height:340px;border-radius:10px;border:1px solid #385361}
+.studio-lap-table{border-collapse:collapse;width:100%;font-size:12px;min-width:490px}
+.studio-lap-table th{text-align:left;background:#1b3541;color:#dbeddf;font-size:11px;
+  position:sticky;top:0}
+.studio-lap-table td,.studio-lap-table th{padding:12px;border-bottom:1px solid #334957}
+.studio-lap-table tr:nth-child(even){background:rgba(90,139,123,.08)}
+.topbar .live-pill{background:#183329;border:1px solid #355f46;border-radius:999px;
+  padding:7px 12px}
+.panel:focus-within{border-color:#47745a}
+@media(max-width:1100px){.studio-grid{grid-template-columns:1fr}}
+@media(max-width:780px){.sidebar{box-shadow:16px 0 35px #0006}
+  .topbar{position:sticky;top:0;z-index:8;background:#101b28ed;backdrop-filter:blur(12px)}
+  .studio-section-heading{align-items:start;flex-direction:column}
+  .studio-version{font-size:9px}
+  .studio-month-panel,.studio-week-panel{min-height:unset}
+  .studio-detail-stats,.studio-lap-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .studio-explorer-heading{flex-wrap:wrap}
+}
+@media(max-width:480px){
+  .studio-month-bars{gap:5px}.studio-month-label{font-size:10px}
+  .studio-month-figure{font-size:11px}.studio-month small{font-size:9px}
+  .studio-chart-legend{font-size:10px}
+  .studio-explorer,.studio-lap-panel{padding:13px}
+  .top-actions #add-workout{font-size:11px;padding:10px}
+}
+@media(prefers-reduced-motion:reduce){.studio-month-bar{transition:none!important}}

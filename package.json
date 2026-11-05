@@ -1,9 +1,9 @@
 {
   "name": "pacelab",
-  "version": "0.7.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
-  "description": "Full-stack, privacy-aware running analytics with a public synthetic demo and experimental ML evaluation",
+  "description": "Privacy-first running analytics, wearable Athlete Studio, local imports and experimental race-model research",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
