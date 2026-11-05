@@ -9,6 +9,7 @@ private beta. **The GitHub Pages preview does not host personal accounts.**
 | [README](../README.md) | Project overview, browser demo, quick start and status |
 | [System architecture](architecture.md) | Data flow, storage, schemas and threat boundaries |
 | [API reference](api.md) | Authentication, workout/import and analysis endpoints |
+| [Browser-local wearable import](browser-import.md) | Private FIT/GPX/TCX decoding, backup, consent and limits |
 | [Testing](testing.md) | Unit, integration, browser and synthetic FIT tests |
 | [ML methodology](ml-methodology.md) | Dataset provenance, leakage, models, metrics and pitfalls |
 | [Research data governance](race-data-governance.md) | Consent, pseudonyms, readiness thresholds and reporting |
@@ -23,10 +24,11 @@ private beta. **The GitHub Pages preview does not host personal accounts.**
 
 ## The two deployment modes
 
-**Public preview:** Static JavaScript/CSS/HTML on GitHub Pages. It is suitable
-for recruiters, works without installing software, and starts with fictional
-workouts. Browser-local edits can persist on that device; **no account server**
-is connected by default.
+**Public local-first app:** Static JavaScript/CSS/HTML on GitHub Pages.
+It starts with fictional workouts, but a user can privately parse running
+FIT/GPX/TCX files and save reduced workout/sensor summaries (no GPS
+coordinates) in that browser. Browser-local data is **not automatically
+synced** or backed up. No account API is connected by default.
 
 **Private full stack:** Docker Compose with FastAPI, PostgreSQL, Nginx and
 Caddy. It can store real account-owned workout records and import user-exported

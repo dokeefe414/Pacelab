@@ -1,5 +1,7 @@
 /** PaceLab v0.7 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
+import {parseLocalActivity} from './local-import.js';
+import {labeledRaceRows,localRaceReadiness,trainingCSV,recentRaceBaseline} from './local-research.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
 import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV,fetchRaceDataReadiness} from './api.js';
 
@@ -16,8 +18,22 @@ export function initIntelligence(options){
   $('#download-race-data').addEventListener('click',async ()=>{
     const output=$('#training-feature-status');
     try{
-      const count=await downloadRaceTrainingCSV();
-      output.textContent='Exported '+count+' labeled race rows. The ML experiment currently requires at least 60 real labeled race results for training.';
+      if(apiIsConnected()){
+        const count=await downloadRaceTrainingCSV();
+        output.textContent='Exported '+count+' eligible rows from your private account. These are research inputs, not a trained prediction.';
+      }else{
+        const rows=labeledRaceRows(context.getWorkouts());
+        if(!rows.length){
+          output.textContent='No eligible labeled races yet. Mark an imported run as Race and log at least five non-race training sessions in its prior 28 days, including Easy or Recovery.';
+          return;
+        }
+        const csv=trainingCSV(rows);
+        const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+        const anchor=document.createElement('a');anchor.href=url;anchor.download='pacelab-local-race-training.csv';
+        anchor.click();
+        setTimeout(()=>URL.revokeObjectURL(url),2000);
+        output.textContent='Exported '+rows.length+' locally computed race rows. No training data was sent to a server.';
+      }
     }catch(err){output.textContent=err.message;}
   });
   $('#assistant-form').addEventListener('submit',askTrainingAssistant);
@@ -72,7 +88,7 @@ export function renderIntelligence(){
       'Local mode: answers use workouts stored in your browser. Sign in to use server-backed analysis.');
   $('#fit-import-hint').textContent=apiIsConnected()?
     'Choose FIT/GPX/TCX files (10 MB each) or a COROS bulk ZIP export (25 MB max, 100 activities). GPS remains private to your account.':
-    'Sign in to import activity files. Local CSV import remains available without an account.';
+    'Import FIT, GPX or TCX files directly in this browser — no login or upload. Only summaries and up to 120 sensor samples are saved locally. GPS coordinates are never stored. ZIP requires a connected private server.';
 }
 function hrDistributionChart(points){
   const bands=heartRateBands(points);
@@ -146,18 +162,24 @@ async function openWorkout(id){
         chart('Running power (device watts)',linePath(track,'powerWatts'),320,120)+'</div>'+
         '<div class="panel detail-hr-panel"><h3>Heart-rate distribution</h3>'+hrDistributionChart(track)+'</div>'+
       lapDetails(laps)+
-      (apiIsConnected()?'<div class="detail-change"><label>Workout type <select id="detail-type">'+
+      ('<div class="detail-change"><label>Workout type <select id="detail-type">'+
         ['Easy','Long','Tempo','Intervals','Race','Recovery'].map(type=>'<option'+(type===w.type?' selected':'')+'>'+type+'</option>').join('')+
         '</select></label><label>Notes <textarea id="detail-notes" maxlength="300" rows="2">'+escapeHTML(w.notes)+'</textarea></label>'+
-        '<button type="button" class="primary" id="save-detail">Save changes</button></div>':'');
-    if(apiIsConnected()){
-      $('#save-detail').addEventListener('click',async()=>{
-        const button=$('#save-detail');button.disabled=true;
-        try{await updateRemoteWorkout(w.id,{date:w.date,type:$('#detail-type').value,distanceMiles:w.distanceMiles,durationSeconds:w.durationSeconds,notes:$('#detail-notes').value});
-          await context.refreshRemote();$('#activity-dialog').close();context.toast('Workout updated. Race classifications count toward your recorded PRs.');}
-        catch(err){context.toast('Update failed: '+err.message);}finally{button.disabled=false;}
-      });
-    }
+        '<button type="button" class="primary" id="save-detail">Save changes</button></div>');
+    $('#save-detail').addEventListener('click',async()=>{
+      const button=$('#save-detail');button.disabled=true;
+      try{
+        const updates={type:$('#detail-type').value,notes:$('#detail-notes').value};
+        if(apiIsConnected()){
+          await updateRemoteWorkout(w.id,{date:w.date,distanceMiles:w.distanceMiles,
+            durationSeconds:w.durationSeconds,...updates});
+          await context.refreshRemote();
+        }else context.updateLocalActivity(w.id,updates);
+        $('#activity-dialog').close();
+        context.toast('Workout updated. Race classifications count toward recorded personal bests.');
+      }catch(err){context.toast('Update failed: '+err.message);}
+      finally{button.disabled=false;}
+    });
   }catch(err){target.textContent='Could not fetch workout: '+err.message;}
 }
 function requestActivityImportConsent(files){
@@ -182,12 +204,18 @@ async function handleFiles(event){
   const input=event.target;
   const chosen=[...input.files].slice(0,50);
   if(!chosen.length)return;
-  if(!apiIsConnected()){context.toast('Sign in to import activity files.');input.value='';return;}
+  const connected=apiIsConnected();
   const status=$('#fit-import-status');let added=0,duplicates=0,failed=[];
+  $('#activity-import-privacy').textContent=connected?
+    'PaceLab parses the original file in memory and discards the bytes. Your authenticated server may retain up to 500 GPS points per workout. GPS can disclose home or training locations; account exports, deletion and backups follow the operator privacy policy.':
+    'PaceLab processes selected files entirely inside your browser. Original file bytes and GPS coordinates are discarded; workout summaries, laps and up to 120 sensor-only samples will be saved in this browser’s local storage. Anyone with access to this browser profile could view them. No account or network upload is involved. ZIP archives require a private API.';
+  $('#activity-import-ack-label').textContent=connected?
+    'I understand that importing can save GPS and sensor data in my private account.':
+    'I agree to save the parsed workout and sensor summary on this device (no GPS coordinates).';
   const approved=await requestActivityImportConsent(chosen);
   if(!approved){
     input.value='';
-    status.textContent='Import cancelled. Nothing was uploaded.';
+    status.textContent='Import cancelled. No files were processed.';
     return;
   }
   status.textContent='Importing '+chosen.length+' files…';
@@ -195,7 +223,11 @@ async function handleFiles(event){
     const file=chosen[i];
     status.textContent='Processing '+(i+1)+' / '+chosen.length+': '+file.name;
     try{
-      if(file.name.toLowerCase().endsWith('.zip')){
+      if(!connected){
+        // Zero network requests. The same parser works on GitHub Pages.
+        const activity=await parseLocalActivity(file);
+        if(context.addLocalActivity(activity))added++;else duplicates++;
+      }else if(file.name.toLowerCase().endsWith('.zip')){
         const result=await uploadBulkArchive(file);
         added+=result.imported;duplicates+=result.duplicates;
         failed.push(...result.files.filter(x=>x.status==='failed').map(x=>file.name+' / '+x.name+': '+x.message));
@@ -206,15 +238,22 @@ async function handleFiles(event){
     }catch(err){failed.push(file.name+': '+err.message);}
   }
   input.value='';
-  try{await context.refreshRemote();}catch(err){failed.push('Refresh failed: '+err.message);}
+  if(connected){try{await context.refreshRemote();}catch(err){failed.push('Refresh failed: '+err.message);}}
   status.textContent=added+' imported · '+duplicates+' duplicates · '+failed.length+' failed.'+
     (failed.length?' Problems: '+failed.slice(0,4).join(' | '):'');
-  context.toast('Activity import complete. '+added+' added.');
+  context.toast((connected?'Private account import':'Browser-local import')+' complete. '+added+' added.');
   renderIntelligence();
 }
 async function loadRaceBaseline(){
   const box=$('#historical-race-result');
-  if(!apiIsConnected()){box.textContent='Sign in and log a Race workout to use your recorded race history.';return;}
+  if(!apiIsConnected()){
+    const r=recentRaceBaseline(context.getWorkouts(),Number($('#target-distance').value));
+    if(!r){box.textContent='No recent locally recorded Race workout at a supported distance. Mark an imported workout as Race in its Details panel.';return;}
+    box.innerHTML='<div class="prediction-output"><span>RECENT RACE · LOCAL FORMULA BASELINE</span><strong>'+
+      formatTime(r.estimatedSeconds)+'</strong><small>Based on a '+formatTime(r.reference.seconds)+
+      ' race on '+escapeHTML(r.reference.date)+'. '+escapeHTML(r.warning)+'</small></div>';
+    return;
+  }
   box.textContent='Analyzing your recorded race history…';
   try{
     const dist=Number($('#target-distance').value);
@@ -226,7 +265,20 @@ async function loadRaceBaseline(){
 }
 async function fillTrainingFeatures(){
   const box=$('#training-feature-status');
-  if(!apiIsConnected()){box.textContent='Sign in to derive training features from your logged runs.';return;}
+  if(!apiIsConnected()){
+    const date=new Date(),cutoff=new Date(date.getFullYear(),date.getMonth(),date.getDate()-27);
+    const day=x=>[x.getFullYear(),String(x.getMonth()+1).padStart(2,'0'),String(x.getDate()).padStart(2,'0')].join('-');
+    const recent=context.getWorkouts().filter(w=>w.date>=day(cutoff)&&w.date<=day(date));
+    const easy=recent.filter(w=>w.type==='Easy'||w.type==='Recovery');
+    const miles=easy.reduce((s,w)=>s+w.distanceMiles,0);
+    if(!recent.length||!miles){box.textContent='Log recent Easy/Recovery workouts to derive experimental features.';return;}
+    $('#ml-mileage').value=(recent.reduce((s,w)=>s+w.distanceMiles,0)/4).toFixed(2);
+    $('#ml-pace').value=formatTime(easy.reduce((s,w)=>s+w.durationSeconds,0)/miles);
+    $('#ml-hard').value=recent.filter(w=>w.type==='Tempo'||w.type==='Intervals'||w.type==='Race').length;
+    $('#ml-long').value=Math.max(...recent.map(w=>w.distanceMiles)).toFixed(2);
+    box.textContent='Filled from '+recent.length+' browser-local workouts. A trained model still requires an independently hosted and evaluated API.';
+    return;
+  }
   try{
     const r=await fetchRaceFeatures(Number($('#ml-event').value));
     if(!r.complete){box.textContent='Not enough Easy / Recovery training data in the last 28 days to calculate easy pace.';return;}
@@ -289,13 +341,10 @@ function compareTrainingPeriods(event){
 
 async function checkRaceDataReadiness(){
   const output=$('#race-readiness-status');
-  if(!apiIsConnected()){
-    output.textContent='Sign into your private account to check your recorded race training history.';
-    return;
-  }
-  output.textContent='Checking real labeled race history…';
+  const local=!apiIsConnected();
+  output.textContent=local?'Checking browser-local labeled race history…':'Checking your private account race history…';
   try{
-    const info=await fetchRaceDataReadiness();
+    const info=local?localRaceReadiness(context.getWorkouts()):await fetchRaceDataReadiness();
     const count=info.eligibleLabeledRows;
     const byEvent=Object.entries(info.eligibleByEventMeters||{}).map(
       ([distance,n])=>distance+'m: '+n).join(', ')||'none';

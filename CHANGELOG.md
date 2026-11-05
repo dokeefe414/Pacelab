@@ -3,6 +3,22 @@
 Versions describe repository capabilities, **not** public production
 deployment or race-model validation. See README for the current limits.
 
+## v0.8 — privacy-first real-workout browser app (2026-11)
+
+- Added client-side FIT/GPX/TCX decoding with checksum/field validation,
+  sample limits, and **no GPS coordinates stored**.
+- Tested four private running FIT files locally without committing originals,
+  as well as synthetic FIT and GPX fixtures in automated tests.
+- Enabled manual race classification and notes on locally imported workouts.
+- Added local race-history equivalents, research readiness, and leakage-
+  conscious pre-race feature CSV export without a hosted API.
+- Added local full JSON backup/restore, validation and mobile privacy
+  messaging for browser-only data.
+- Added explicit privacy-first import documentation and Render DB URL
+  compatibility regression tests.
+- Cloud-hosted accounts are **not** claimed live; original FIT files/routes
+  remain private, and ML remains experimental.
+
 ## v0.7 — private-beta account security and research integrity (2026-11)
 
 - Added database-backed revocation of all access tokens on server sign-out

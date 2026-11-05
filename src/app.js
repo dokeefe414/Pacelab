@@ -10,7 +10,8 @@ function toast(message){const el=$('#toast');el.textContent=message;el.classList
 function load(){try{const raw=localStorage.getItem(KEY);if(raw!==null){const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw Error('Invalid saved data');workouts=parsed.map(validateWorkout);usingSample=false;return;}}catch(e){console.warn('Could not read saved workouts',e);toast('Saved data could not be read; showing sample workouts.');}workouts=sampleWorkouts();usingSample=true;}
 function persist(){if(apiIsConnected()) throw Error('Account workouts must be saved using the API');localStorage.setItem(KEY,JSON.stringify(workouts));usingSample=false;render();}
 async function refreshRemote(){workouts=(await fetchWorkouts()).map(w=>({...w,...validateWorkout(w)}));usingSample=false;render();}
-function syncMode(){const connected=apiIsConnected();$('#account-button').textContent=connected?'Account: '+apiUser().email:'Sign in / Create account';$('#account-status').textContent=connected?'● Synced to account':'● Local-only workspace';$('#reset-data').hidden=connected;$('#sample-banner').hidden=connected||!usingSample;}
+function syncMode(){const connected=apiIsConnected();$('#account-button').textContent=connected?'Account: '+apiUser().email:'Sign in / Create account';$('#account-status').textContent=connected?'● Synced to account':'● Local-only workspace';$('#reset-data').hidden=connected;$('#sample-banner').hidden=connected||!usingSample;
+  $('#local-backup-panel').hidden=connected;$('#export-local-json').disabled=connected||usingSample;}
 function showAccountDialog(){
   if(apiIsConnected()){const dialog=$('#account-settings-dialog');$('#settings-email').textContent=apiUser().email;$('#account-delete-result').textContent='';dialog.showModal();return;}const staticPreview=window.location.hostname.endsWith('.github.io');
   const needsApi=staticPreview && getApiBase()==='/api';
@@ -21,6 +22,31 @@ function showAccountDialog(){
   $('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
+function updateLocalActivity(id,updates){
+  if(apiIsConnected())throw Error('Use your authenticated server to edit this workout.');
+  const index=workouts.findIndex(w=>w.id===id);
+  if(index<0)throw Error('Workout not found');
+  const updated=validateWorkout({...workouts[index],type:updates.type,notes:updates.notes});
+  const next=[...workouts];next[index]=updated;
+  try{localStorage.setItem(KEY,JSON.stringify(next));}
+  catch{throw Error('Browser storage is full or unavailable. Export your workout CSV before making more changes.');}
+  workouts=next;usingSample=false;render();
+}
+function addLocalActivity(activity){
+  if(apiIsConnected())throw Error('Use your connected private server for imports.');
+  const validated=validateWorkout(activity);
+  const base=usingSample?[]:workouts;
+  if(validated.sourceHash&&base.some(w=>w.sourceHash===validated.sourceHash))return false;
+  // Cross-format export of the same run: do not create duplicate workouts.
+  if(base.some(w=>w.date===validated.date&&w.source&&
+    Math.abs(w.distanceMiles-validated.distanceMiles)<.015&&
+    Math.abs(w.durationSeconds-validated.durationSeconds)<=5))return false;
+  const next=[...base,validated];
+  try{localStorage.setItem(KEY,JSON.stringify(next));}
+  catch{throw Error('Browser storage is full or blocked. Export CSV and delete old activities before importing more.');}
+  workouts=next;usingSample=false;render();
+  return true;
+}
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
 function sorted(){return [...workouts].sort((a,b)=>b.date.localeCompare(a.date));}
 function nav(view){currentView=view;$$('.page').forEach(el=>el.classList.toggle('active',el.id===view+'-page'));$$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===view));$('#topbar-name').textContent=({dashboard:'Your training workspace',workouts:'Workout history',predictions:'Performance modeling',insights:'Analytics and insights',assistant:'Your grounded training assistant'})[view];$('.sidebar').classList.remove('open');render();}
@@ -41,6 +67,33 @@ $('#ml-form').addEventListener('submit',async event=>{event.preventDefault();con
 $('#calculate-prediction').addEventListener('click',renderPrediction);['reference-time','reference-distance','target-distance','riegel-exponent'].forEach(id=>$('#'+id).addEventListener('change',renderPrediction));
 $('#csv-input').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>2*1024*1024)throw Error('CSV must be smaller than 2 MB.');const {workouts:incoming,errors}=parseCSV(await file.text());if(!incoming.length)throw Error('No valid workouts found. '+(errors[0]||''));if(!apiIsConnected()) realWorkouts();const keys=new Set(workouts.map(w=>w.date+'|'+w.type+'|'+w.distanceMiles+'|'+w.durationSeconds));let added=0;let failed=0;for(const w of incoming){const k=w.date+'|'+w.type+'|'+w.distanceMiles+'|'+w.durationSeconds;if(keys.has(k))continue;try{if(apiIsConnected()){await createRemoteWorkout(w);}else{workouts.push(w);}keys.add(k);added++;}catch(err){failed++;console.warn('Unable to import workout',err);}}if(apiIsConnected()){await refreshRemote();}else{persist();}toast('Imported '+added+' workouts.'+(errors.length+failed?' '+(errors.length+failed)+' rows skipped or failed.':''));if(errors.length)console.warn('CSV import issues:',errors);nav('workouts');}catch(err){toast('Import failed: '+err.message);}finally{e.target.value='';}});
 $('#export-csv').addEventListener('click',()=>{const blob=new Blob([toCSV(workouts)],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pacelab-workouts.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),500);});
+$('#export-local-json').addEventListener('click',()=>{
+  if(apiIsConnected()||usingSample){toast('Create or import private local workouts before exporting a backup.');return;}
+  const data={format:'pacelab-local-backup-v1',createdAt:new Date().toISOString(),workouts,
+    containsSensorSamples:true,gpsCoordinatesStored:false};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download='pacelab-private-local-backup.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast('Full local backup exported. Store it privately: sensor and training records are sensitive.');
+});
+$('#restore-local-json').addEventListener('change',async event=>{
+  const input=event.target,file=input.files?.[0];
+  if(!file)return;
+  try{
+    if(apiIsConnected())throw Error('Sign out to restore a browser-only backup.');
+    if(file.size>5*1024*1024)throw Error('Backup must be 5 MB or smaller.');
+    const value=JSON.parse(await file.text());
+    if(value?.format!=='pacelab-local-backup-v1'||!Array.isArray(value.workouts)||
+      value.workouts.length>2000||!value.workouts.length)
+      throw Error('Not a supported PaceLab local backup.');
+    const safe=value.workouts.map(validateWorkout);
+    if(!confirm('Replace all workouts stored in this browser with '+safe.length+' backup entries? Export your current data first.'))return;
+    try{localStorage.setItem(KEY,JSON.stringify(safe));}
+    catch{throw Error('Your browser does not have enough storage for this backup.');}
+    workouts=safe;usingSample=false;render();toast('Restored '+safe.length+' local workouts.');
+  }catch(err){toast('Restore failed: '+err.message);}
+  finally{input.value='';}
+});
 $('#reset-data').addEventListener('click',()=>{if(apiIsConnected()){toast('Sign out before resetting local demo data.');return;}if(!confirm('Replace saved workouts with demo data? Export a backup first if needed.'))return;localStorage.removeItem(KEY);load();render();toast('Sample data restored');});
 $('#dismiss-banner').addEventListener('click',()=>$('#sample-banner').hidden=true);
 $('#account-button').addEventListener('click',showAccountDialog);
@@ -92,7 +145,7 @@ $('#delete-account-form').addEventListener('submit',async event=>{
   }catch(err){$('#account-delete-result').textContent=err.message;}finally{btn.disabled=false;}
 });
 $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#account-submit');btn.disabled=true;$('#auth-error').textContent='';try{setApiBase($('#api-base').value);const action=$('input[name="auth-action"]:checked').value;await authenticate(action,$('#auth-email').value,$('#auth-password').value);try{await refreshRemote();}catch(err){logout();throw err;}$('#account-dialog').close();$('#auth-password').value='';toast('Connected to your private workout account.');}catch(err){$('#auth-error').textContent=err.message;}finally{btn.disabled=false;}});
-initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample});
+initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity,updateLocalActivity});
 initTour(nav);
 initPerformance({getWorkouts:()=>workouts});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());

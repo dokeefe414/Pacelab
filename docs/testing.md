@@ -17,7 +17,8 @@ npm run check:docs
 
 Tests use Node's built-in test runner. They cover time and pace formulas,
 local summaries, route/trace transformations, training-calendar dates,
-race-event filtering and side-by-side workout comparisons.
+race-event filtering, workout comparisons, **FIT checksum/invalid-value
+handling**, source-coordinate exclusion, and prior-date-only race features.
 
 The Vite build serves as a production bundle check, but GitHub Pages can
 also serve the source directly from the root in static demo mode.
@@ -30,7 +31,10 @@ npm run test:e2e
 ```
 
 Playwright tests the dashboard and sample-data disclosure, workout logging,
-race-equivalence UI, navigation, tour and mobile mode.
+race-equivalence UI, navigation, tour and mobile mode. The new
+**browser-local GPX integration** verifies explicit device-storage consent,
+single-file import, duplicate detection, persistence across reload, editing
+an imported session's Race type, and **zero API requests**.
 
 An authenticated integration test mocks a **fictional** API account and a
 synthetic workout to verify the detail dialog, HR/cadence/power charts

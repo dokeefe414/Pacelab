@@ -21,12 +21,49 @@ export function predictRace(referenceSeconds, referenceMeters, targetMeters, exp
 export function paceSeconds(workout) { return workout.durationSeconds / workout.distanceMiles; }
 export function validateWorkout(input) {
   const date=String(input.date||'');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || new Date(date+'T12:00:00').toISOString().slice(0,10)!==date) throw new Error('Enter a valid date.');
-  const distanceMiles=Number(input.distanceMiles); const durationSeconds=Number(input.durationSeconds);
-  if (!Number.isFinite(distanceMiles) || distanceMiles<=0 || distanceMiles>200) throw new Error('Distance must be between 0 and 200 miles.');
-  if (!Number.isFinite(durationSeconds) || durationSeconds<=0 || durationSeconds>86400) throw new Error('Enter a valid workout duration.');
-  const types=['Easy','Long','Tempo','Intervals','Race','Recovery']; const type=types.includes(input.type)?input.type:'Easy';
-  return {id:String(input.id||crypto.randomUUID()),date,type,distanceMiles,durationSeconds,notes:String(input.notes||'').slice(0,300)};
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || new Date(date+'T12:00:00').toISOString().slice(0,10)!==date)
+    throw new Error('Enter a valid date.');
+  const distanceMiles=Number(input.distanceMiles),durationSeconds=Number(input.durationSeconds);
+  if (!Number.isFinite(distanceMiles)||distanceMiles<=0||distanceMiles>200)
+    throw new Error('Distance must be between 0 and 200 miles.');
+  if (!Number.isFinite(durationSeconds)||durationSeconds<=0||durationSeconds>86400)
+    throw new Error('Enter a valid workout duration.');
+  const types=['Easy','Long','Tempo','Intervals','Race','Recovery'];
+  const type=types.includes(input.type)?input.type:'Easy';
+  const workout={id:String(input.id||crypto.randomUUID()),date,type,distanceMiles,durationSeconds,
+    notes:String(input.notes||'').slice(0,300)};
+  if(!['fit','gpx','tcx'].includes(input.source))return workout;
+  workout.source=input.source;
+  if(typeof input.startTime==='string'&&Number.isFinite(Date.parse(input.startTime)))
+    workout.startTime=new Date(input.startTime).toISOString();
+  const limits={
+    elapsedSeconds:[1,86400],avgHeartRate:[30,230],maxHeartRate:[30,230],
+    avgCadenceSpm:[0,260],avgPowerWatts:[0,2500],
+    elevationGainMeters:[0,9000],elevationLossMeters:[0,9000]
+  };
+  for(const [name,[min,max]] of Object.entries(limits)){
+    const value=input[name];
+    if(typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max)
+      workout[name]=value;
+  }
+  // Browser imports use SHA-256 to deduplicate. Hashes, sensor traces and
+  // original bytes are never sent to PaceLab's servers by this code.
+  if(typeof input.sourceHash==='string'&&/^[a-f0-9]{64}$/.test(input.sourceHash))
+    workout.sourceHash=input.sourceHash;
+  if(Array.isArray(input.laps))workout.laps=input.laps.slice(0,300).filter(l=>
+    Number.isFinite(l.distanceMiles)&&l.distanceMiles>0&&
+    Number.isFinite(l.durationSeconds)&&l.durationSeconds>0).map((l,i)=>({
+      number:i+1,distanceMiles:l.distanceMiles,durationSeconds:l.durationSeconds,
+      source:'device_lap'
+    }));
+  if(Array.isArray(input.track))workout.track=input.track.slice(0,120).map(p=>{
+    const out={};
+    for(const k of ['elapsed','distanceMiles','heartRate','cadenceSpm','powerWatts','elevationMeters'])
+      out[k]=typeof p[k]==='number'&&Number.isFinite(p[k])?p[k]:null;
+    // Deliberately do not retain latitude or longitude in localStorage.
+    return out;
+  });
+  return workout;
 }
 export function weekStart(dateString) {
   const date=new Date(dateString+'T12:00:00Z'); const day=(date.getUTCDay()+6)%7;date.setUTCDate(date.getUTCDate()-day);return date.toISOString().slice(0,10);
