@@ -147,6 +147,8 @@ an alarm does not prove a meaningful athletic change.
 The JSON report contains:
 - exact seeds, scenario definitions, sample size and intervention position
 - summary error metrics, individual replication metrics
+- seed-paired post-boundary MAE differences against frozen (negative
+  means lower error for that synthetic pair, not statistical significance)
 - detector alarm counts and delays
 - explicit assumptions, intended use and limitations
 

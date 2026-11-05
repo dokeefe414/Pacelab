@@ -19,6 +19,26 @@ test automation and responsible prediction research.
 > installing software or creating an account. **No cloud account API has
 > been deployed**; Render still requires owner approval, hosting costs,
 > security controls and verified deployment. ML remains experimental.
+> A new **Research Track 1** is testing adaptation to *synthetic* shifts;
+> these experiments do not validate predictions for actual runners.
+
+## Our central research goal
+
+**PaceLab should help runners understand training development and,
+eventually, deliver trustworthy race forecasts under changing conditions.**
+The application is where runners explore their records; the research is
+where we test whether prediction methods actually work.
+
+Our new [Distribution-Shift Research Track](docs/distribution-shift-study.md)
+tests frozen, periodically updated, rolling-window and observed-error-triggered
+models against controlled synthetic shifts. Every forecast is generated
+**before** the result is revealed, and each experiment has reproducible
+seeds, baselines, negative controls and openly documented limitations.
+
+**Research results are not yet real-athlete prediction results.** We will
+only consider putting adaptive machine learning into the public race
+predictor after genuine labeled races demonstrate reliable held-out
+performance and honest uncertainty.
 
 ## Try it in under a minute
 
@@ -249,6 +269,7 @@ Start with the [documentation index](docs/README.md).
 | [REST API reference](docs/api.md) | Routes, auth, payloads, errors and data units |
 | [Testing & CI](docs/testing.md) | Frontend, browser, backend, FIT and database tests |
 | [ML methodology](docs/ml-methodology.md) | Features, leakage control, baselines and uncertainty |
+| [Controlled shift research](docs/distribution-shift-study.md) | Rigorous synthetic shift/forecasting protocol and reproducible experiment |
 | [Engineering decisions](docs/decisions.md) | Design choices and honest tradeoffs |
 | [Portfolio case study](docs/case-study.md) | Problem, architecture and interview walkthrough |
 | [Self-hosted deployment](deploy/README.md) | HTTPS, operator setup, diagnostics, backups and rollback |
@@ -270,10 +291,13 @@ Start with the [documentation index](docs/README.md).
 - **Before public accounts:** Centralized rate limits, stronger session
   revocation/recovery, explicit privacy consent, incident response,
   encrypted scheduled backups and an independent security review.
-- **Next research step:** Evaluate chronological and athlete-disjoint
-  accuracy on consented labeled races, report Wilson coverage uncertainty,
-  flag feature drift and suppress tiny per-event test errors. An
-  attractive prediction plot is not evidence of forecasting validity.
+- **Research Track 1:** Synthetic stationary, covariate, relationship,
+  noise and combined shifts; four updating policies, paired seeds,
+  causal forecast-before-result testing and explicit detector alarms.
+- **Next real-data step:** More preregistered stress-test scenarios,
+  delayed/sparse race labels and genuinely consented cohorts with
+  chronological and athlete-disjoint holdouts. Synthetic error reductions
+  are not evidence of actual forecasting accuracy.
 
 **Built by Daniel O'Keefe** · [Live sample-data demo](https://dokeefe414.github.io/Pacelab/) ·
 [Source repository](https://github.com/dokeefe414/Pacelab)
