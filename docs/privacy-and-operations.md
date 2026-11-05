@@ -11,6 +11,19 @@ account from the live database. Old backups may continue to retain copies
 until your retention window expires. Do not claim a deletion instantly
 scrubs all possible backups.
 
+## Browser-local imports: a distinct privacy boundary
+
+The public GitHub Pages app can process single FIT/GPX/TCX files entirely
+within the user's browser. It discards raw input bytes and does **not**
+store latitude or longitude in localStorage. The user explicitly accepts
+storage of activity summaries and up to 120 sensor samples on that device.
+
+Browser localStorage is not encrypted by PaceLab, does not synchronize
+between devices, and is not a durable backup. Full JSON backup downloads
+include sensor readings and should be stored securely; clearing site data
+or using private-browsing mode can erase imported workouts. No network
+request is made by this local import path. [Technical details](browser-import.md).
+
 ## Active protections
 
 - User-scoped workout authorization and Argon2 password hashing.

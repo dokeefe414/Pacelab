@@ -17,9 +17,11 @@ auditable and sensitive location records private.
 
 ### Usable public experience
 
-A click-to-open GitHub Pages demo with a guided tour, fictional sample
-training, local workout logging, charts, deterministic training explanations
-and a formula-based race calculator. Visitors need no Docker installation
+A click-to-open GitHub Pages application with a guided tour, fictional
+sample training **or locally imported real workouts**, training charts,
+a no-server FIT/GPX/TCX parser, deterministic data explanations, race
+history and a formula-based race calculator. Private browser-local sensor
+summaries exclude GPS coordinates. Visitors need no Docker installation
 or login to explore the product.
 
 **Live demo:** [Try PaceLab](https://dokeefe414.github.io/Pacelab/)

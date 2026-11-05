@@ -2,35 +2,43 @@
 
 ### [▶ Open the live PaceLab demo](https://dokeefe414.github.io/Pacelab/) · [Architecture](docs/architecture.md) · [Project case study](docs/case-study.md)
 
-**Explore a running analytics product directly in your browser — no downloads,
-account or installation required.** The public demo has clearly labeled
-fictional training data, so employers can explore its functionality without
-access to a runner's private information.
+**Explore running analytics directly in your browser — no installation or
+account required.** PaceLab starts with fictional demo workouts, but v0.8
+also lets you privately import real FIT/GPX/TCX exports and analyze them
+without uploading your data to a server. Raw GPS coordinates are discarded
+before browser-local storage.
 
 PaceLab is an open-source software-engineering and machine-learning project
 by **Daniel O'Keefe**, combining collegiate distance-running interests
 with full-stack APIs, wearable activity data, interactive analytics,
 test automation and responsible prediction research.
 
-> **Current status: v0.7 private-beta engineering source.** The GitHub
-> Pages demo is live. The authenticated API requires separate hosting.
-> An optional Render Blueprint is ready to review, but **no cloud resources
-> have been activated or verified live**. Race ML is exploratory rather
-> than a validated personalized forecast.
+> **Current status: v0.8 local-first athlete beta.** The browser site
+> is live, including local FIT/GPX/TCX imports, analysis and backups.
+> **No production account API is hosted**; the optional Render Blueprint
+> still requires explicit provisioning and payment authorization.
+> Research ML remains exploratory, not a validated individualized predictor.
 
 ## Try it in under a minute
 
 1. **[Launch the website](https://dokeefe414.github.io/Pacelab/)**.
 2. Explore the **Overview** and **Insights** dashboards. All demo
    activity data is synthetic, not a real person's location or results.
-3. Open **Workout log** to compare, filter and manually log activities.
-4. Visit **Race predictor** to see the transparent Riegel formula.
-5. Ask the **Training assistant** about logged mileage, pace or race bests;
-   the browser-only mode calculates answers locally from the current log.
+3. Open **Workout log → FIT / GPX / TCX** and choose an exported running
+   file. Review the privacy warning, then import it entirely in-browser.
+4. Open an imported workout's **Details** to view timing, laps and sensor
+   samples. If it was a race, change the type to **Race** and save.
+5. Visit **Race predictor** to view a recent-race formula estimate or
+   check your real race-data readiness and export pre-race research rows.
+6. Ask the **Training assistant** about mileage, pace or recorded races.
+7. Use **Backup local data** to protect your browser-stored training log.
 
-The public preview can save manually entered data **in that browser**.
-It does not host accounts, server imports or private records. The
-private-beta account experience requires a separately deployed HTTPS API.
+Nothing in the local import flow is uploaded to PaceLab's servers.
+The browser saves workout and sensor summaries; **not** original file
+bytes or GPS coordinates. Backups are not encrypted by PaceLab, and
+clearing site storage can erase local data. Read the
+[privacy-first import guide](docs/browser-import.md) for exact limits.
+The full authenticated multi-device system still needs separate HTTPS hosting.
 
 ## Product features
 
@@ -38,14 +46,14 @@ private-beta account experience requires a separately deployed HTTPS API.
 |---|---|---|
 | Running dashboard | Weekly mileage, training duration and training mix | Yes |
 | Athlete performance center | 12-week activity calendar, workout comparisons, event-specific race progression | Yes |
-| Workout log | Add, edit, filter, export and compare manual activities | Yes, local storage |
+| Workout log | Import, edit, classify, filter and compare exported real runs | Yes, local storage |
 | Race equivalent | Riegel conversion between 800m, mile, 3K, 5K, 8K and 10K | Yes, mathematical baseline |
 | Grounded assistant | Data-grounded statistics with optional per-question AI opt-in | Yes, deterministic local mode |
 | Wearable coverage | Shows recorded HR, cadence, power and elevation versus missing data | Yes |
 | Private accounts | User-scoped storage, password changes and session revocation across devices | Requires separate API |
-| COROS import | FIT/GPX/TCX or ZIP, with an explicit private-GPS-storage acknowledgement | Requires separate API |
-| Athlete privacy controls | Full JSON export and password-confirmed account deletion | Requires separate API |
-| Research ML predictor | Real labeled-race readiness and optional athlete-disjoint evaluation | Requires genuine data, trusted model and API |
+| COROS import | Browser-local FIT/GPX/TCX with no GPS saved; private server supports ZIP and reduced GPS | **Yes** for single files; ZIP requires API |
+| Athlete privacy controls | Local full JSON backup/restore and no-GPS browser storage; private account export/deletion via API | **Yes** for local backups |
+| Research ML predictor | Local labeled-race readiness and CSV export; model training requires genuine data and a trusted backend | **Yes** for local preparation, not model inference |
 | HTTPS production reference | FastAPI, Postgres, Nginx, Caddy, Docker and backups | Requires operator-owned server |
 
 ### Performance and wearable insights
@@ -65,8 +73,10 @@ fabricate personal records.
 
 ```mermaid
 flowchart TD
-  A[Browser visitor] --> B[GitHub Pages static demo]
-  B --> C[(Fictional sample/local workout data)]
+  A[Browser visitor] --> B[GitHub Pages static app]
+  B --> C[(Sample or private local workout data)]
+  F[User-selected FIT / GPX / TCX] -->|No network requests| B
+  B -->|Discard GPS, store summaries| C
   U[Authenticated athlete] --> H[HTTPS reverse proxy]
   H --> API[FastAPI and Pydantic]
   API --> DB[(PostgreSQL / SQLAlchemy)]
@@ -78,9 +88,10 @@ flowchart TD
   TRAIN -.-> MODEL[Trusted optional model artifact]
 ```
 
-**Public and private modes are deliberately separated.** GitHub Pages
-cannot run PostgreSQL or a Python API. We do not silently collect private
-GPS traces in the sample-data demo.
+**Public and private modes are deliberately separated.** The static
+site now processes real exports inside the browser without sending them
+to a server. GitHub Pages still cannot run PostgreSQL or FastAPI, and
+PaceLab never silently collects a private route in this local mode.
 
 [Full architecture and trust boundaries](docs/architecture.md)
 
@@ -91,7 +102,7 @@ GPS traces in the sample-data demo.
 | Frontend | JavaScript ES modules, HTML/CSS, Vite, accessible responsive UI |
 | API | Python, FastAPI, Pydantic, authenticated REST endpoints |
 | Database | PostgreSQL / SQLite for local dev, SQLAlchemy, Alembic migrations |
-| Sport data | FIT, GPX and TCX parsing, bounded ZIP imports and duplicate detection |
+| Sport data | Client-side FIT/GPX/TCX, server-side bounded ZIP, invalid-sensor filtering and duplicate detection |
 | Modeling | scikit-learn: median, ridge, random forest, gradient boosting, compact neural network |
 | Research evaluation | Chronological holdouts, expanding-window backtests, MAE/RMSE, intervals and model cards |
 | Infrastructure | Docker Compose, Nginx, Caddy HTTPS reverse proxy |
@@ -143,26 +154,31 @@ compression and size limits. Original binary files are parsed in memory
 and discarded; a bounded set of derived GPS coordinates can still be
 stored in your **private account**, and can reveal sensitive locations.
 
-The importer has been inspected against private COROS activity exports
-and tested against synthetic binary FIT inputs. The original private
-activity files and routes are **not included** in the repository.
-See [tests](docs/testing.md) and
-[architecture](docs/architecture.md) for parser guarantees and caveats.
+The browser FIT decoder was locally checked with four private running
+FIT files, including activities containing elapsed-time pauses, without
+committing the files or publishing routes. Synthetic binary FIT and
+browser import fixtures run in CI. The original private activity
+files and GPS traces are **not included** in GitHub.
+Read the [browser import specification](docs/browser-import.md),
+[tests](docs/testing.md) and
+[architecture](docs/architecture.md) for exact capabilities and limitations.
 
 ## Data readiness and consent
 
-The authenticated Race predictor can check how many genuine labeled
-pre-race rows and distinct race dates are available, before an experimental
-model is trained. A minimum of **60 rows and 12 dates** is only a research
+The local browser and authenticated Race predictor can check how many
+genuine labeled pre-race rows and distinct race dates are available before
+an experimental model is trained. A minimum of **60 rows and 12 dates** is only a research
 preflight, not evidence of useful race predictions.
 
 Optional multi-athlete experiments accept a **pseudonymous** athlete_id
 column for athlete-disjoint validation; no athlete identities or routes
 appear in the metrics. [Read the research data guide](docs/race-data-governance.md).
 
-The private COROS importer requires explicit GPS-storage acknowledgment.
-Even when an external AI provider is configured, sending a question and
-aggregate stats requires **opt-in on that individual question**.
+The private-server COROS importer requires explicit GPS-storage
+acknowledgment. Browser-local imports require separate **device storage**
+consent, but discard GPS and raw source bytes. Even when an external
+AI provider is configured, transmitting the question and aggregate
+stats requires **opt-in on that individual question**.
 
 ## AI and model evaluation: what is real
 
@@ -220,6 +236,7 @@ Start with the [documentation index](docs/README.md).
 | Guide | What you'll learn |
 |---|---|
 | [System architecture](docs/architecture.md) | Component diagram, DB model, ownership, privacy boundaries |
+| [Privacy-first browser imports](docs/browser-import.md) | FIT/GPX/TCX parsing, local sensor storage, backup and privacy limits |
 | [REST API reference](docs/api.md) | Routes, auth, payloads, errors and data units |
 | [Testing & CI](docs/testing.md) | Frontend, browser, backend, FIT and database tests |
 | [ML methodology](docs/ml-methodology.md) | Features, leakage control, baselines and uncertainty |
@@ -234,8 +251,10 @@ Start with the [documentation index](docs/README.md).
 
 ## Current boundaries and roadmap
 
-- **Available now:** Public synthetic demo, browser-local analytics,
-  private-backend source code, COROS file processing and tested research tools.
+- **Available now:** Public no-installation site with sample or real
+  browser-local FIT/GPX/TCX running data, summary-only GPS privacy,
+  workout comparisons, local race preparation and private JSON backups.
+  The authenticated backend source code and its research tools are tested.
 - **Not yet live:** Public account/database service, automatic provider
   synchronization and a validated personalized ML forecast.
 - **Before public accounts:** Centralized rate limits, stronger session

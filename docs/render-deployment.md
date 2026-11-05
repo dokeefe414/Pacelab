@@ -67,3 +67,18 @@ before collecting anyone's GPS tracks.
 
 See [SECURITY.md](../SECURITY.md), [ops](privacy-and-operations.md) and
 [Render Blueprint specification](https://render.com/docs/blueprint-spec).
+
+
+## Local-first alternative while hosting is not activated
+
+The GitHub Pages app can now import **individual FIT, GPX and TCX** files
+in-browser with explicit local-storage consent, without signing in or
+provisioning Render. This makes personal workouts analyzable while
+the paid cloud service remains unconnected. It **does not** synchronize
+data between devices or replace a private PostgreSQL service.
+
+To activate a real hosted backend, the owner must still connect Render,
+approve the Blueprint's resources and costs, provision an operator-controlled
+private account, verify migrations, and complete a security and backup
+review. **No live hosting, billing or cloud deployment is implied by these
+repository files.** See [browser import guidance](browser-import.md).
