@@ -1,5 +1,6 @@
 /** PaceLab v0.7 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
+import {parseLocalActivity} from './local-import.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
 import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV,fetchRaceDataReadiness} from './api.js';
 
@@ -72,7 +73,7 @@ export function renderIntelligence(){
       'Local mode: answers use workouts stored in your browser. Sign in to use server-backed analysis.');
   $('#fit-import-hint').textContent=apiIsConnected()?
     'Choose FIT/GPX/TCX files (10 MB each) or a COROS bulk ZIP export (25 MB max, 100 activities). GPS remains private to your account.':
-    'Sign in to import activity files. Local CSV import remains available without an account.';
+    'Import FIT, GPX or TCX files directly in this browser — no login or upload. Only summaries and up to 120 sensor samples are saved locally. GPS coordinates are never stored. ZIP requires a connected private server.';
 }
 function hrDistributionChart(points){
   const bands=heartRateBands(points);
@@ -182,12 +183,18 @@ async function handleFiles(event){
   const input=event.target;
   const chosen=[...input.files].slice(0,50);
   if(!chosen.length)return;
-  if(!apiIsConnected()){context.toast('Sign in to import activity files.');input.value='';return;}
+  const connected=apiIsConnected();
   const status=$('#fit-import-status');let added=0,duplicates=0,failed=[];
+  $('#activity-import-privacy').textContent=connected?
+    'PaceLab parses the original file in memory and discards the bytes. Your authenticated server may retain up to 500 GPS points per workout. GPS can disclose home or training locations; account exports, deletion and backups follow the operator privacy policy.':
+    'PaceLab processes selected files entirely inside your browser. Original file bytes and GPS coordinates are discarded; workout summaries, laps and up to 120 sensor-only samples will be saved in this browser’s local storage. Anyone with access to this browser profile could view them. No account or network upload is involved. ZIP archives require a private API.';
+  $('#activity-import-ack-label').textContent=connected?
+    'I understand that importing can save GPS and sensor data in my private account.':
+    'I agree to save the parsed workout and sensor summary on this device (no GPS coordinates).';
   const approved=await requestActivityImportConsent(chosen);
   if(!approved){
     input.value='';
-    status.textContent='Import cancelled. Nothing was uploaded.';
+    status.textContent='Import cancelled. No files were processed.';
     return;
   }
   status.textContent='Importing '+chosen.length+' files…';
@@ -195,7 +202,11 @@ async function handleFiles(event){
     const file=chosen[i];
     status.textContent='Processing '+(i+1)+' / '+chosen.length+': '+file.name;
     try{
-      if(file.name.toLowerCase().endsWith('.zip')){
+      if(!connected){
+        // Zero network requests. The same parser works on GitHub Pages.
+        const activity=await parseLocalActivity(file);
+        if(context.addLocalActivity(activity))added++;else duplicates++;
+      }else if(file.name.toLowerCase().endsWith('.zip')){
         const result=await uploadBulkArchive(file);
         added+=result.imported;duplicates+=result.duplicates;
         failed.push(...result.files.filter(x=>x.status==='failed').map(x=>file.name+' / '+x.name+': '+x.message));
@@ -206,10 +217,10 @@ async function handleFiles(event){
     }catch(err){failed.push(file.name+': '+err.message);}
   }
   input.value='';
-  try{await context.refreshRemote();}catch(err){failed.push('Refresh failed: '+err.message);}
+  if(connected){try{await context.refreshRemote();}catch(err){failed.push('Refresh failed: '+err.message);}}
   status.textContent=added+' imported · '+duplicates+' duplicates · '+failed.length+' failed.'+
     (failed.length?' Problems: '+failed.slice(0,4).join(' | '):'');
-  context.toast('Activity import complete. '+added+' added.');
+  context.toast((connected?'Private account import':'Browser-local import')+' complete. '+added+' added.');
   renderIntelligence();
 }
 async function loadRaceBaseline(){

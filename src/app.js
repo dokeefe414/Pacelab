@@ -21,6 +21,21 @@ function showAccountDialog(){
   $('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
+function addLocalActivity(activity){
+  if(apiIsConnected())throw Error('Use your connected private server for imports.');
+  const validated=validateWorkout(activity);
+  const base=usingSample?[]:workouts;
+  if(validated.sourceHash&&base.some(w=>w.sourceHash===validated.sourceHash))return false;
+  // Cross-format export of the same run: do not create duplicate workouts.
+  if(base.some(w=>w.date===validated.date&&w.source&&
+    Math.abs(w.distanceMiles-validated.distanceMiles)<.015&&
+    Math.abs(w.durationSeconds-validated.durationSeconds)<=5))return false;
+  const next=[...base,validated];
+  try{localStorage.setItem(KEY,JSON.stringify(next));}
+  catch{throw Error('Browser storage is full or blocked. Export CSV and delete old activities before importing more.');}
+  workouts=next;usingSample=false;render();
+  return true;
+}
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
 function sorted(){return [...workouts].sort((a,b)=>b.date.localeCompare(a.date));}
 function nav(view){currentView=view;$$('.page').forEach(el=>el.classList.toggle('active',el.id===view+'-page'));$$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===view));$('#topbar-name').textContent=({dashboard:'Your training workspace',workouts:'Workout history',predictions:'Performance modeling',insights:'Analytics and insights',assistant:'Your grounded training assistant'})[view];$('.sidebar').classList.remove('open');render();}
@@ -92,7 +107,7 @@ $('#delete-account-form').addEventListener('submit',async event=>{
   }catch(err){$('#account-delete-result').textContent=err.message;}finally{btn.disabled=false;}
 });
 $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#account-submit');btn.disabled=true;$('#auth-error').textContent='';try{setApiBase($('#api-base').value);const action=$('input[name="auth-action"]:checked').value;await authenticate(action,$('#auth-email').value,$('#auth-password').value);try{await refreshRemote();}catch(err){logout();throw err;}$('#account-dialog').close();$('#auth-password').value='';toast('Connected to your private workout account.');}catch(err){$('#auth-error').textContent=err.message;}finally{btn.disabled=false;}});
-initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample});
+initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity});
 initTour(nav);
 initPerformance({getWorkouts:()=>workouts});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());

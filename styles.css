@@ -133,3 +133,11 @@
 .sensor-coverage-track{height:8px;border-radius:6px;background:#2a3e49;overflow:hidden}
 .sensor-coverage-track span{display:block;height:100%;border-radius:6px;background:#b5f36c}
 @media(max-width:530px){.sensor-coverage-grid{grid-template-columns:1fr}}
+
+/* v0.8 local-first wearable onboarding and accessible import copy */
+#activity-import-privacy{line-height:1.6}
+#import-privacy-note{font-size:12px;line-height:1.55}
+.import-consent-check{display:flex;align-items:flex-start;gap:12px;line-height:1.5}
+.import-consent-check input{flex:none;margin-top:4px}
+#fit-import-status{overflow-wrap:anywhere;white-space:normal}
+@media(max-width:640px){.import-consent-dialog{width:min(96vw,600px);max-height:86dvh;overflow-y:auto}}
