@@ -47,6 +47,12 @@ test('public static demo imports GPX locally without calling an API',async({page
   await expect(page.locator('#workout-list .workout-row')).toHaveCount(1);
   await page.locator('#workout-list [data-open]').first().click();
   await expect(page.locator('#activity-detail')).toContainText('Heart rate');
+  await page.locator('#detail-type').selectOption('Race');
+  await page.locator('#save-detail').click();
+  await expect(page.locator('#activity-dialog')).toBeHidden();
+  await page.reload();
+  const savedType=await page.evaluate(()=>JSON.parse(localStorage.getItem('pacelab.workouts.v1'))[0].type);
+  expect(savedType).toBe('Race');
   expect(networkCalls).toBe(0);
 });
 

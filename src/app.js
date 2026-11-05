@@ -21,6 +21,16 @@ function showAccountDialog(){
   $('#account-dialog').showModal();}
 
 function realWorkouts(){if(usingSample){workouts=[];usingSample=false;}}
+function updateLocalActivity(id,updates){
+  if(apiIsConnected())throw Error('Use your authenticated server to edit this workout.');
+  const index=workouts.findIndex(w=>w.id===id);
+  if(index<0)throw Error('Workout not found');
+  const updated=validateWorkout({...workouts[index],type:updates.type,notes:updates.notes});
+  const next=[...workouts];next[index]=updated;
+  try{localStorage.setItem(KEY,JSON.stringify(next));}
+  catch{throw Error('Browser storage is full or unavailable. Export your workout CSV before making more changes.');}
+  workouts=next;usingSample=false;render();
+}
 function addLocalActivity(activity){
   if(apiIsConnected())throw Error('Use your connected private server for imports.');
   const validated=validateWorkout(activity);
@@ -107,7 +117,7 @@ $('#delete-account-form').addEventListener('submit',async event=>{
   }catch(err){$('#account-delete-result').textContent=err.message;}finally{btn.disabled=false;}
 });
 $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#account-submit');btn.disabled=true;$('#auth-error').textContent='';try{setApiBase($('#api-base').value);const action=$('input[name="auth-action"]:checked').value;await authenticate(action,$('#auth-email').value,$('#auth-password').value);try{await refreshRemote();}catch(err){logout();throw err;}$('#account-dialog').close();$('#auth-password').value='';toast('Connected to your private workout account.');}catch(err){$('#auth-error').textContent=err.message;}finally{btn.disabled=false;}});
-initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity});
+initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity,updateLocalActivity});
 initTour(nav);
 initPerformance({getWorkouts:()=>workouts});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());

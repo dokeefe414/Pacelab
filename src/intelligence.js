@@ -147,18 +147,24 @@ async function openWorkout(id){
         chart('Running power (device watts)',linePath(track,'powerWatts'),320,120)+'</div>'+
         '<div class="panel detail-hr-panel"><h3>Heart-rate distribution</h3>'+hrDistributionChart(track)+'</div>'+
       lapDetails(laps)+
-      (apiIsConnected()?'<div class="detail-change"><label>Workout type <select id="detail-type">'+
+      ('<div class="detail-change"><label>Workout type <select id="detail-type">'+
         ['Easy','Long','Tempo','Intervals','Race','Recovery'].map(type=>'<option'+(type===w.type?' selected':'')+'>'+type+'</option>').join('')+
         '</select></label><label>Notes <textarea id="detail-notes" maxlength="300" rows="2">'+escapeHTML(w.notes)+'</textarea></label>'+
-        '<button type="button" class="primary" id="save-detail">Save changes</button></div>':'');
-    if(apiIsConnected()){
-      $('#save-detail').addEventListener('click',async()=>{
-        const button=$('#save-detail');button.disabled=true;
-        try{await updateRemoteWorkout(w.id,{date:w.date,type:$('#detail-type').value,distanceMiles:w.distanceMiles,durationSeconds:w.durationSeconds,notes:$('#detail-notes').value});
-          await context.refreshRemote();$('#activity-dialog').close();context.toast('Workout updated. Race classifications count toward your recorded PRs.');}
-        catch(err){context.toast('Update failed: '+err.message);}finally{button.disabled=false;}
-      });
-    }
+        '<button type="button" class="primary" id="save-detail">Save changes</button></div>');
+    $('#save-detail').addEventListener('click',async()=>{
+      const button=$('#save-detail');button.disabled=true;
+      try{
+        const updates={type:$('#detail-type').value,notes:$('#detail-notes').value};
+        if(apiIsConnected()){
+          await updateRemoteWorkout(w.id,{date:w.date,distanceMiles:w.distanceMiles,
+            durationSeconds:w.durationSeconds,...updates});
+          await context.refreshRemote();
+        }else context.updateLocalActivity(w.id,updates);
+        $('#activity-dialog').close();
+        context.toast('Workout updated. Race classifications count toward recorded personal bests.');
+      }catch(err){context.toast('Update failed: '+err.message);}
+      finally{button.disabled=false;}
+    });
   }catch(err){target.textContent='Could not fetch workout: '+err.message;}
 }
 function requestActivityImportConsent(files){

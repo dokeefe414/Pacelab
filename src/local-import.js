@@ -166,8 +166,8 @@ export function parseFit(buffer){
         heartRate:bpm(fields[3]),
         cadenceSpm:fields[4]===null?null:finite(fields[4]*2,0,260),
         powerWatts:finite(fields[7],0,2500),
-        elevationMeters:elevation(fields[73]===null?
-          fields[2]===null?null:fields[2]/5-500:fields[73]/5-500),
+        elevationMeters:elevation(fields[73]==null?
+          fields[2]==null?null:fields[2]/5-500:fields[73]/5-500),
       });
     }else if(def.number===19){
       laps.push({distanceMeters:fields[9]===null?null:fields[9]/100,
