@@ -16,7 +16,10 @@ test('public static demo imports GPX locally without calling an API',async({page
   await page.route('**/api/**',route=>{networkCalls++;return route.abort();});
   await page.addInitScript(()=>{
     localStorage.setItem('pacelab.tour.v1','1');
-    localStorage.removeItem('pacelab.workouts.v1');
+    if(!sessionStorage.getItem('pacelab.localImportTestInitialized')){
+      localStorage.removeItem('pacelab.workouts.v1');
+      sessionStorage.setItem('pacelab.localImportTestInitialized','1');
+    }
   });
   await page.goto('/');
   await page.locator('[data-view="workouts"]').click();
