@@ -70,3 +70,37 @@ test('local ZIP imports are declined without an untrusted decompressor',async({p
   await page.locator('#activity-import-accept').click();
   await expect(page.locator('#fit-import-status')).toContainText('ZIP requires a private server');
 });
+
+
+test('local full JSON backup can restore an imported workout after reset',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('pacelab.tour.v1','1'));
+  await page.goto('/');
+  await page.locator('[data-view="workouts"]').click();
+  await page.locator('#activity-files').setInputFiles({
+    name:'synthetic-run.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(gpx)
+  });
+  await page.locator('#activity-import-ack').check();
+  await page.locator('#activity-import-accept').click();
+  await expect(page.locator('#workout-list .workout-row')).toHaveCount(1);
+  const downloadEvent=page.waitForEvent('download');
+  await page.locator('#export-local-json').click();
+  const download=await downloadEvent;
+  expect(download.suggestedFilename()).toMatch(/pacelab-private-local-backup\.json/);
+  const raw=await (await import('node:fs/promises')).readFile(await download.path());
+  const saved=JSON.parse(raw.toString('utf8'));
+  expect(saved.format).toBe('pacelab-local-backup-v1');
+  expect(saved.workouts).toHaveLength(1);
+  expect(JSON.stringify(saved.workouts)).not.toContain('"lat"');
+  expect(JSON.stringify(saved.workouts)).not.toContain('"lon"');
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#reset-data').click();
+  await expect(page.locator('#workout-list .workout-row')).toHaveCount(40);
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#restore-local-json').setInputFiles({
+    name:'private-backup.json',mimeType:'application/json',buffer:raw
+  });
+  await expect(page.locator('#workout-list .workout-row')).toHaveCount(1);
+  const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('pacelab.workouts.v1')));
+  expect(restored[0].source).toBe('gpx');
+  expect(restored[0].track).toHaveLength(3);
+});
