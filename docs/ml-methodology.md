@@ -6,6 +6,19 @@ athlete dataset. The public demo uses a deterministic race-equivalence
 formula. The code below is an *experiment pipeline*, not evidence of a
 validated race forecast.
 
+## Controlled distribution-shift experiment
+
+PaceLab now has a distinct **synthetic-only research track** testing what
+happens when the model's inputs, target relationship, or observation noise
+change. It uses the existing *feature schema*, but randomly generated
+values and arbitrary coefficients, not an empirically validated runner
+simulation. Four identical Ridge model families differ only in update
+policy and are evaluated with prediction-before-observation ordering.
+
+See the [protocol and validity limits](distribution-shift-study.md)
+and the [research CI workflow](../.github/workflows/shift-research.yml).
+The public race predictor remains separate from these experiments.
+
 ## Research question
 
 Can pre-race training summaries predict finish time for standard track and

@@ -1,0 +1,48 @@
+name: Controlled Shift Research
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'backend/ml/shift_experiment.py'
+      - 'backend/tests/test_shift_experiment.py'
+      - '.github/workflows/shift-research.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/ml/shift_experiment.py'
+      - 'backend/tests/test_shift_experiment.py'
+      - '.github/workflows/shift-research.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reproducible-synthetic-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Test generator, paired shifts and no-future-leakage guarantees
+        run: python -m pytest -q tests/test_shift_experiment.py
+      - name: Run fixed-protocol synthetic benchmark
+        run: python -m ml.shift_experiment --output-dir shift-results --seeds 7,19,41 --strength 1
+      - name: Archive synthetic results (no private athlete data)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pacelab-synthetic-shift-research
+          path: |
+            backend/shift-results/shift-summary.json
+            backend/shift-results/shift-metrics.csv
+            backend/shift-results/shift-report.md
+          retention-days: 14
+          if-no-files-found: error

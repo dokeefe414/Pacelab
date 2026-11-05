@@ -14,6 +14,7 @@ private beta. **The GitHub Pages preview does not host personal accounts.**
 | [Production beta gates](production-beta-checklist.md) | Hosted account, privacy, security, backups, monitoring and ML sign-off |
 | [Testing](testing.md) | Unit, integration, browser and synthetic FIT tests |
 | [ML methodology](ml-methodology.md) | Dataset provenance, leakage, models, metrics and pitfalls |
+| [Distribution-shift study](distribution-shift-study.md) | Synthetic controlled regimes, causal online updates and reproducibility |
 | [Research data governance](race-data-governance.md) | Consent, pseudonyms, readiness thresholds and reporting |
 | [Portfolio case study](case-study.md) | Design motivation, skills demonstrated and tradeoffs |
 | [Engineering decisions](decisions.md) | Rationale and alternatives for major choices |

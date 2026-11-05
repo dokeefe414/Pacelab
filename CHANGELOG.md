@@ -3,6 +3,20 @@
 Versions describe repository capabilities, **not** public production
 deployment or race-model validation. See README for the current limits.
 
+## Research Track 1 — Distribution-shift forecasting (2026-11)
+
+- Built a seed-paired, strictly synthetic generator with stationary,
+  covariate, relationship, noise and combined interventions.
+- Compared a naive last-race forecast with frozen, scheduled, rolling
+  and residual-triggered Ridge policies using causal prequential evaluation.
+- Added before/after MAE/RMSE, paired post-shift differences, false alarms
+  and first post-intervention detection delay diagnostics.
+- Verified reproducibility and enforced no-future-label leakage in tests.
+- Added an independent GitHub Actions workflow creating reproducible,
+  anonymous synthetic JSON/CSV research artifacts.
+- Documented hypotheses, math, negative controls and limitations.
+- **No synthetic experiment is evidence of real-athlete model validity.**
+
 ## v0.9 — Athlete Studio and evidence-first research (2026-11)
 
 - Rebuilt the athlete analytics experience with a monthly 3/6/12-month

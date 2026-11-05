@@ -50,6 +50,12 @@ duplicate detection.
 
 ### AI research infrastructure
 
+The new controlled-perturbation research track evaluates frozen and
+adaptive Ridge forecasting with deterministic synthetic interventions
+and strict prediction-before-observation ordering. It logs paired
+error differences and detector delays without claiming genuine athletic
+forecasting improvements.
+
 Real-labeled pre-race feature export, multiple model families, chronological
 and expanding-window evaluation, baseline comparison, interval coverage,
 model-card documentation and caveats about distribution shift.
