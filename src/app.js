@@ -57,8 +57,8 @@ function closeMobileNav(){
 }
 function nav(view){
   currentView=view;
-  $('.page').forEach(el=>el.classList.toggle('active',el.id===view+'-page'));
-  $('.nav-item').forEach(el=>{
+  document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active',el.id===view+'-page'));
+  document.querySelectorAll('.nav-item').forEach(el=>{
     const active=el.dataset.view===view;el.classList.toggle('active',active);
     if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
   });
