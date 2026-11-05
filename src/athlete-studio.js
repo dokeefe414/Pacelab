@@ -98,7 +98,7 @@ function sensorPlot(track,selection){
   const title=stats.label+' vs elapsed time';
   const circles=geometry.coords.filter((_,i)=>i%Math.max(1,Math.ceil(geometry.coords.length/30))===0)
     .map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.2" fill="#d9f9a9"/>').join('');
-  return '<div class="studio-detail-chart"><div class="studio-detail-stats">'+
+  return '<div class="studio-detail-chart"><h4>'+stats.label+' by elapsed time</h4><div class="studio-detail-stats">'+
     '<span>Recorded samples <strong>'+stats.coverageSamples+'</strong></span>'+
     '<span>Lowest <strong>'+axis(stats.min)+' '+stats.unit+'</strong></span>'+
     '<span>Highest <strong>'+axis(stats.max)+' '+stats.unit+'</strong></span>'+
