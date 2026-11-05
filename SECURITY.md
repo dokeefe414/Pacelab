@@ -1,5 +1,21 @@
 # PaceLab security policy
 
+## Client-side privacy boundaries (v0.8)
+
+The public site parses individual running FIT/GPX/TCX files in-browser
+without an API call. Browser localStorage retains derived workout and
+limited non-GPS sensor summaries only after an explicit acknowledgment.
+Private training times and physiological readings can remain sensitive,
+and localStorage is **not encrypted** or protected from scripts executing
+on the same website origin. Avoid importing data on shared devices.
+Exported local JSON backups are unencrypted by PaceLab; store them
+privately. Clearing site storage can permanently delete the only local
+copy. No original watch file or GPS route is stored locally by the app.
+
+This does **not** imply independent security certification of all FIT
+variants or browsers. See [browser import design](docs/browser-import.md).
+
+
 PaceLab has a **public synthetic-data demo** and a **self-hostable private-beta
 backend**. The server has not undergone an independent security audit. Do not
 open registration to the public or accept sensitive data from strangers until

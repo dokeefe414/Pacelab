@@ -1,5 +1,19 @@
 # Make PaceLab a working browser link
 
+## v0.8 update: real files work in the public browser
+
+The public site can now import **individual FIT, GPX or TCX running files**
+without a login or server upload. This is done entirely with browser APIs:
+raw bytes and GPS coordinates are discarded, and workout summaries plus
+a maximum of 120 non-GPS sensor samples are saved to localStorage only
+after explicit consent. Browser storage is not encrypted by PaceLab or
+synchronized across devices. Use the private JSON backup/restore controls.
+
+ZIP bulk upload, authenticated server account management and private
+database persistence still require the separately hosted API.
+See [the browser-import guide](browser-import.md) for format-specific limits,
+privacy implications and tested compatibility.
+
 ## Current publishing setup: main branch, root directory
 
 **Status: deployed successfully.** The November 4, 2026 GitHub Pages branch deployment completed successfully. PaceLab's frontend uses browser-supported JavaScript modules with relative imports and is served from the repository root.

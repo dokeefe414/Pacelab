@@ -1,5 +1,29 @@
 # PaceLab engineering decisions
 
+## ADR-009 — Client-side activity ingestion while hosting is unconnected
+
+**Decision:** Let visitors import FIT/GPX/TCX running files directly on
+GitHub Pages, using pure JavaScript parsing and browser-local storage.
+
+**Why:** Private server deployment is a separate cloud project requiring
+provider approval, billing and security review. Local ingestion gives
+the existing click-to-open website real usefulness without moving
+personal sensor or GPS records to an operator-controlled service.
+
+**Privacy:** Original file bytes are dropped immediately, coordinates
+are not persisted, and only bounded summary/lap/non-GPS sensor records
+are stored on the device after explicit consent. Users can export/restore
+a private JSON backup. A local backup is *not* encryption or cross-device
+sync.
+
+**Tradeoffs:** No route map, ZIP processing, universal FIT device support,
+or automatic multi-device sync in this mode. Sensor summaries and
+timestamps remain sensitive and localStorage is readable by scripts
+running on the same origin.
+
+[Implementation and test notes](browser-import.md)
+
+
 This log explains why the current design choices exist and what could
 replace them later. Dates reflect the repository evolution in 2026.
 

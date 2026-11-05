@@ -1,5 +1,20 @@
 # Contributing to PaceLab
 
+## Privacy-first browser parsing rules
+
+Changes to src/local-import.js must:
+- Keep raw FIT/GPX/TCX bytes and GPS coordinates out of browser storage.
+- Limit source bytes, sample processing, developer fields and retained
+  sensor points; reject invalid/unsupported records, not guess their values.
+- Include synthetic FIT/GPX/TCX test cases and a browser no-API-request test.
+- Never commit privately exported activity files or screenshots containing
+  personal locations or unique device identifiers.
+- Preserve users' device-local storage consent and JSON backup behavior.
+- Report parser incompatibilities explicitly rather than fabricating data.
+
+Read [the import privacy guide](docs/browser-import.md).
+
+
 PaceLab values reproducible engineering, accessible design, athlete privacy
 and transparent AI evaluation.
 

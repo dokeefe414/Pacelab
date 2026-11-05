@@ -1,5 +1,12 @@
 # PaceLab architecture and data flow — v0.7
 
+> **v0.8 distinction:** GitHub Pages can parse real exported FIT/GPX/TCX
+> files entirely within the browser. It discards GPS coordinates and raw
+> source bytes; summaries and sensor timelines persist locally only with
+> user consent. It still has no PostgreSQL service or hosted private accounts.
+> [Browser import design](browser-import.md).
+
+
 ## System boundary
 
 PaceLab offers two intentionally different products: a **public, synthetic
