@@ -141,3 +141,14 @@
 .import-consent-check input{flex:none;margin-top:4px}
 #fit-import-status{overflow-wrap:anywhere;white-space:normal}
 @media(max-width:640px){.import-consent-dialog{width:min(96vw,600px);max-height:86dvh;overflow-y:auto}}
+
+.local-backup-panel{display:flex;justify-content:space-between;gap:20px;align-items:center;
+  margin:15px 0;padding:18px 20px;border:1px solid #345848;border-radius:12px;
+  background:linear-gradient(130deg,rgba(80,140,90,.12),rgba(23,42,54,.3))}
+.local-backup-panel[hidden]{display:none}
+.local-backup-panel strong{color:#c7eea1;font-size:13px}
+.local-backup-panel p{font-size:12px;color:#aec0bd;max-width:580px;margin:6px 0 0;line-height:1.6}
+.local-backup-actions{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.local-backup-actions>*{font-size:12px;min-height:42px;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:760px){.local-backup-panel{flex-direction:column;align-items:stretch;gap:12px}
+  .local-backup-actions{flex-direction:column}.local-backup-actions>*{width:100%}}
