@@ -1,5 +1,6 @@
 /** PaceLab v0.7 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
+import {sensorExplorerMarkup,attachSensorExplorer,lapStudioMarkup} from './athlete-studio.js';
 import {parseLocalActivity} from './local-import.js';
 import {labeledRaceRows,localRaceReadiness,trainingCSV,recentRaceBaseline} from './local-research.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
@@ -154,18 +155,15 @@ async function openWorkout(id){
       metric('Source',escapeHTML(w.source||'Manual'),escapeHTML(w.date))+'</div>'+
       '<p class="body-copy">'+escapeHTML(w.notes||'No notes')+'</p>'+
       '<div class="detail-charts">'+
-        chart('Route trace (schematic; not a map)',routePath(track),320,150)+
-        chart('Heart-rate samples',linePath(track,'heartRate'),320,120)+
-        chart('Segment pace (derived; GPS gaps filtered)',linePath(paceTrace(track),'paceSeconds'),320,120)+
-        chart('Elevation samples',linePath(track,'elevationMeters'),320,120)+
-        chart('Cadence (steps/minute)',linePath(track,'cadenceSpm'),320,120)+
-        chart('Running power (device watts)',linePath(track,'powerWatts'),320,120)+'</div>'+
+        (routePath(track)?chart('Route trace (schematic; not a map)',routePath(track),320,150):'')+
+        '</div>'+sensorExplorerMarkup(track)+
         '<div class="panel detail-hr-panel"><h3>Heart-rate distribution</h3>'+hrDistributionChart(track)+'</div>'+
-      lapDetails(laps)+
+      lapStudioMarkup(laps)+
       ('<div class="detail-change"><label>Workout type <select id="detail-type">'+
         ['Easy','Long','Tempo','Intervals','Race','Recovery'].map(type=>'<option'+(type===w.type?' selected':'')+'>'+type+'</option>').join('')+
         '</select></label><label>Notes <textarea id="detail-notes" maxlength="300" rows="2">'+escapeHTML(w.notes)+'</textarea></label>'+
         '<button type="button" class="primary" id="save-detail">Save changes</button></div>');
+    attachSensorExplorer(track);
     $('#save-detail').addEventListener('click',async()=>{
       const button=$('#save-detail');button.disabled=true;
       try{

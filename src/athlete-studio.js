@@ -140,7 +140,7 @@ export function lapStudioMarkup(laps){
   if(!result.laps.length)return '<div class="studio-lap-panel"><h3>Lap analysis</h3>'+
     '<p class="body-copy">No usable device laps. Do not infer mile splits from an unrecorded lap.</p></div>';
   return '<div class="studio-lap-panel"><div class="eyebrow">RECORDED, NOT SIMULATED</div>'+
-    '<h3>Lap lab</h3><div class="studio-lap-facts">'+
+    '<h3>Lap lab · normalized split pace</h3><div class="studio-lap-facts">'+
     '<span><strong>'+result.laps.length+'</strong> device laps</span>'+
     '<span><strong>'+result.comparableCount+'</strong> comparable distance laps</span>'+
     '<span><strong>'+(result.fastestComparableLap??'—')+'</strong> fastest comparable lap #</span>'+

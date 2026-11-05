@@ -1,5 +1,6 @@
 import {initTour} from './tour.js';
 import {initPerformance,renderPerformance} from './performance.js';
+import {initAthleteStudio,renderAthleteStudio} from './athlete-studio.js';
 import {KEY,parseTime,formatTime,predictRace,validateWorkout,paceSeconds,lastWeeks,summarize,toCSV,parseCSV,sampleWorkouts} from './core.js';
 import {initIntelligence,renderIntelligence} from './intelligence.js';
 import {apiIsConnected,apiUser,authenticate,logout,restoreSession,hasSavedSession,fetchWorkouts,createRemoteWorkout,deleteRemoteWorkout,setApiBase,getApiBase,requestMLPrediction,downloadAccountData,permanentlyDeleteAccount,signOutEverywhere,changeAccountPassword} from './api.js';
@@ -49,7 +50,21 @@ function addLocalActivity(activity){
 }
 function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
 function sorted(){return [...workouts].sort((a,b)=>b.date.localeCompare(a.date));}
-function nav(view){currentView=view;$$('.page').forEach(el=>el.classList.toggle('active',el.id===view+'-page'));$$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===view));$('#topbar-name').textContent=({dashboard:'Your training workspace',workouts:'Workout history',predictions:'Performance modeling',insights:'Analytics and insights',assistant:'Your grounded training assistant'})[view];$('.sidebar').classList.remove('open');render();}
+function closeMobileNav(){
+  $('.sidebar').classList.remove('open');
+  $('#nav-backdrop').hidden=true;
+  $('#menu-toggle').setAttribute('aria-expanded','false');
+}
+function nav(view){
+  currentView=view;
+  $('.page').forEach(el=>el.classList.toggle('active',el.id===view+'-page'));
+  $('.nav-item').forEach(el=>{
+    const active=el.dataset.view===view;el.classList.toggle('active',active);
+    if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
+  });
+  $('#topbar-name').textContent=({dashboard:'Your training workspace',workouts:'Workout history',predictions:'Performance modeling',insights:'Analytics and insights',assistant:'Your grounded training assistant'})[view];
+  closeMobileNav();render();
+}
 function metric(label,value,detail,icon){return '<article class="metric"><div class="metric-top"><span>'+label+'</span><span class="metric-icon">'+icon+'</span></div><div class="metric-value">'+value+'</div><div class="metric-detail">'+detail+'</div></article>';}
 function renderMetrics(){const s=summarize(workouts);const w=lastWeeks(workouts);const current=w[w.length-1];$('#metrics').innerHTML=metric('Total mileage',s.miles.toFixed(1)+' <small>mi</small>','Across '+s.count+' activities','↗')+metric('Training time',s.hours.toFixed(1)+' <small>hrs</small>','Total moving time','◷')+metric('Average pace',s.averagePace?formatTime(s.averagePace):'—','Minutes per mile','◉')+metric('This week',current.miles.toFixed(1)+' <small>mi</small>',current.activities+' logged runs','▥');$('#insight-metrics').innerHTML=metric('Longest workout',s.longest.toFixed(1)+' <small>mi</small>','Across logged runs','↗')+metric('Active weeks',w.filter(x=>x.activities).length+'/8','Recent training blocks','◷')+metric('Runs logged',s.count,'Your activity history','◎')+metric('Average distance',s.count?(s.miles/s.count).toFixed(1)+' <small>mi</small>':'—','Per logged workout','▥');}
 function renderBars(target,rows,key='miles',unit='mi'){const max=Math.max(1,...rows.map(r=>r[key]));target.innerHTML='<div class="bars">'+rows.map((r,i)=>'<div class="bar-col"><div class="bar-value">'+(r[key]?Number(r[key].toFixed(1)):'')+'</div><div class="bar-track"><div class="bar-fill" style="height:'+Math.max(r[key]?3:0,r[key]/max*100)+'%" title="'+Number(r[key].toFixed(1))+' '+unit+'"></div></div><div class="bar-label">'+new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})+'</div></div>').join('')+'</div>';}
@@ -58,9 +73,21 @@ function renderLists(){const rows=sorted();$('#recent-workouts').innerHTML=rows.
 function renderBreakdown(){const counts={};workouts.forEach(w=>counts[w.type]=(counts[w.type]||0)+w.distanceMiles);const total=Object.values(counts).reduce((a,b)=>a+b,0);$('#type-breakdown').innerHTML=total?Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([type,miles])=>'<div class="breakdown-row"><div class="breakdown-label"><strong>'+escapeHTML(type)+'</strong><span>'+miles.toFixed(1)+' mi · '+Math.round(miles/total*100)+'%</span></div><div class="progress"><div style="width:'+(miles/total*100)+'%"></div></div></div>').join(''):'<div class="empty">Log workouts to see training distribution.</div>';}
 function renderInsights(){const weeks=lastWeeks(workouts);renderBars($('#consistency-chart'),weeks,'activities','activities');const active=weeks.filter(w=>w.activities);const avg=active.length?active.reduce((s,w)=>s+w.miles,0)/active.length:0;const latest=weeks[weeks.length-1].miles;$('#insight-text').innerHTML='<p><strong>'+active.length+' of 8</strong> weeks include logged workouts.</p><p>Average mileage in active weeks: <strong>'+avg.toFixed(1)+' miles</strong>.</p><p>This week so far: <strong>'+latest.toFixed(1)+' miles</strong>.</p><p class="muted">Partial weeks and missing workouts affect trends. These are descriptive statistics, not training or medical advice.</p>';}
 function renderPrediction(){try{const t=parseTime($('#reference-time').value);const d=Number($('#reference-distance').value);const target=Number($('#target-distance').value);const exponent=Number($('#riegel-exponent').value);const result=predictRace(t,d,target,exponent);$('#prediction-result').innerHTML='<div class="prediction-output"><span>ESTIMATED FINISH TIME</span><strong>'+formatTime(result)+'</strong><small>Formula baseline based on '+formatTime(t)+' reference performance. Not personalized to your training.</small></div>';$('#prediction-teaser').innerHTML='<div class="teaser-time">'+formatTime(predictRace(t,d,5000,exponent))+'</div><p>5K equivalent · based on a manually entered reference performance</p><span class="teaser-tag">FORMULA BASELINE</span>';}catch(e){$('#prediction-result').innerHTML='<p class="error">'+escapeHTML(e.message)+'</p>';$('#prediction-teaser').innerHTML='<div class="empty">Enter a valid reference race to estimate a 5K equivalent.</div>';}}
-function render(){renderMetrics();renderBars($('#mileage-chart'),lastWeeks(workouts));renderLists();renderBreakdown();renderInsights();renderPrediction();$('#sample-banner').hidden=apiIsConnected()||!usingSample;$('#portfolio-ribbon').hidden=apiIsConnected()||!usingSample;syncMode();renderIntelligence();renderPerformance();}
+function render(){renderMetrics();renderBars($('#mileage-chart'),lastWeeks(workouts));renderLists();renderBreakdown();renderInsights();renderPrediction();$('#sample-banner').hidden=apiIsConnected()||!usingSample;$('#portfolio-ribbon').hidden=apiIsConnected()||!usingSample;syncMode();renderIntelligence();renderPerformance();renderAthleteStudio();}
 function openDialog(){const d=new Date();$('#w-date').value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');$('#form-error').textContent='';$('#workout-form').reset();$('#w-date').value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');$('#workout-dialog').showModal();}
-$$('[data-view]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.view)));$$('[data-nav]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.nav)));$$('[data-add]').forEach(el=>el.addEventListener('click',openDialog));$('#add-workout').addEventListener('click',openDialog);$('#close-dialog').addEventListener('click',()=>$('#workout-dialog').close());$('#menu-toggle').addEventListener('click',()=>$('.sidebar').classList.toggle('open'));$('#search-workouts').addEventListener('input',renderLists);$('#filter-type').addEventListener('change',renderLists);
+$$('[data-view]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.view)));$$('[data-nav]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.nav)));$$('[data-add]').forEach(el=>el.addEventListener('click',openDialog));$('#add-workout').addEventListener('click',openDialog);$('#close-dialog').addEventListener('click',()=>$('#workout-dialog').close());$('#menu-toggle').addEventListener('click',()=>{
+  const opened=$('.sidebar').classList.toggle('open');
+  $('#nav-backdrop').hidden=!opened;
+  $('#menu-toggle').setAttribute('aria-expanded',String(opened));
+  if(opened)$('.sidebar .nav-item.active')?.focus();
+});
+$('#nav-backdrop').addEventListener('click',()=>{closeMobileNav();$('#menu-toggle').focus();});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&$('.sidebar').classList.contains('open')){
+    closeMobileNav();$('#menu-toggle').focus();
+  }
+});
+window.addEventListener('resize',()=>{if(window.innerWidth>780)closeMobileNav();});$('#search-workouts').addEventListener('input',renderLists);$('#filter-type').addEventListener('change',renderLists);
 $('#workout-form').addEventListener('submit',async e=>{e.preventDefault();try{const run=validateWorkout({date:$('#w-date').value,type:$('#w-type').value,distanceMiles:$('#w-distance').value,durationSeconds:parseTime($('#w-duration').value),notes:$('#w-notes').value});if(apiIsConnected()){await createRemoteWorkout(run);await refreshRemote();}else{realWorkouts();workouts.push(run);persist();}$('#workout-dialog').close();toast('Workout saved!');}catch(err){$('#form-error').textContent=err.message;}});
 $('#workout-list').addEventListener('click',async e=>{const btn=e.target.closest('[data-delete]');if(!btn)return;if(!confirm('Delete this workout?'))return;try{if(apiIsConnected()){await deleteRemoteWorkout(btn.dataset.delete);await refreshRemote();}else{workouts=workouts.filter(w=>w.id!==btn.dataset.delete);persist();}toast('Workout deleted');}catch(err){toast('Delete failed: '+err.message);}});
 $('#ml-form').addEventListener('submit',async event=>{event.preventDefault();const output=$('#ml-result');output.textContent='Checking configured model…';try{const data=await requestMLPrediction({eventMeters:Number($('#ml-event').value),weeklyMiles4w:Number($('#ml-mileage').value),averageEasyPaceSecondsPerMile:parseTime($('#ml-pace').value),hardSessions4w:Number($('#ml-hard').value),longestRunMiles:Number($('#ml-long').value)});output.innerHTML='<div class="prediction-output"><span>EXPERIMENTAL MODEL ESTIMATE</span><strong>'+formatTime(data.estimatedSeconds)+'</strong><small>Indicative interval: '+formatTime(data.lowerSeconds)+' – '+formatTime(data.upperSeconds)+'. '+(data.trainedOnSyntheticData?'WARNING: Synthetic demonstration data. ':'')+'Method: '+escapeHTML(data.method)+'. This is not a guaranteed calibrated forecast.</small></div>';}catch(err){output.innerHTML='<p class="error">'+escapeHTML(err.message)+'. The ML model must be trained and configured on your backend first.</p>';}});
@@ -148,6 +175,7 @@ $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const 
 initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity,updateLocalActivity});
 initTour(nav);
 initPerformance({getWorkouts:()=>workouts});
+initAthleteStudio({getWorkouts:()=>workouts});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());
 load();render();
 if(hasSavedSession())restoreSession().then(async user=>{if(user){try{await refreshRemote();toast('Account session restored.');}catch(err){logout();load();render();toast('Could not restore account data: '+err.message);}}}).catch(console.error);
