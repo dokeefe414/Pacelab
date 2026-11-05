@@ -188,6 +188,7 @@ python -m ml.shift_experiment --output-dir shift-results
 Outputs:
 - shift-summary.json
 - shift-metrics.csv
+- shift-report.md (human-readable, synthetic-only tables and detector diagnostics)
 
 Both are reproducible synthetic summaries with no athlete identifiers.
 The scheduled/manual

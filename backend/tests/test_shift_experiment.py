@@ -109,6 +109,10 @@ def test_benchmark_produces_only_tagged_synthetic_metrics(tmp_path):
     json_text=__import__("pathlib").Path(output[0]).read_text()
     assert '"data_source": "controlled_synthetic_generator_only"' in json_text
     assert "gps" not in json_text.lower()
+    report_text=__import__("pathlib").Path(output[2]).read_text()
+    assert "NOT REAL ATHLETES" in report_text
+    assert "Paired post-boundary" in report_text
+    assert "negative delta" in report_text.lower()
 
 
 def test_prepost_boundary_must_have_evaluation_support():

@@ -43,5 +43,6 @@ jobs:
           path: |
             backend/shift-results/shift-summary.json
             backend/shift-results/shift-metrics.csv
+            backend/shift-results/shift-report.md
           retention-days: 14
           if-no-files-found: error

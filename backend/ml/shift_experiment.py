@@ -354,6 +354,87 @@ def run_benchmark(*, seeds=DEFAULT_SEEDS, scenarios=SCENARIOS,
     }
 
 
+
+def render_research_report(report):
+    """Write an audit-friendly synthetic report without athlete information."""
+    metadata = report["metadata"]
+    lines = [
+        "# PaceLab — Controlled Distribution-Shift Experiment",
+        "",
+        "**SYNTHETIC MATHEMATICAL BENCHMARK — NOT REAL ATHLETES.**",
+        "",
+        "## Protocol",
+        "",
+        f"- Random seeds: {', '.join(map(str, metadata['seeds']))}",
+        f"- Records per seed/scenario: {metadata['n_per_seed']}",
+        f"- Initial labeled prefix: {metadata['initial_labeled_prefix']}",
+        f"- Pseudo/intervention boundary index: {metadata['regime_boundary_index']}",
+        f"- Shift severity: {metadata['severity']}",
+        "- Evaluation: predict first, reveal the label second, then update for the *next* forecast.",
+        "- Stationary regime uses a placebo boundary; all scenarios share paired pre-shift random draws.",
+        "",
+        "## Forecast errors by scenario (seconds)",
+        "",
+        "| Scenario | Forecast policy | Phase | N | MAE | RMSE |",
+        "|---|---|---|---:|---:|---:|",
+    ]
+    for row in report["summary"]:
+        lines.append(
+            f"| {row['scenario']} | {row['policy']} | {row['phase']} | "
+            f"{row['n']} | {row['mae_seconds']:.2f} | "
+            f"{row['rmse_seconds']:.2f} |"
+        )
+    lines.extend([
+        "",
+        "## Paired post-boundary MAE differences versus frozen Ridge",
+        "",
+        "A **negative delta** indicates the candidate's MAE was lower than frozen "
+        "for the paired synthetic seeds. Positive means worse. "
+        "These small-seed averages have **no significance claim**.",
+        "",
+        "| Scenario | Alternative policy | Seeds | Mean Δ MAE (s) | Seeds better |",
+        "|---|---|---:|---:|---:|",
+    ])
+    for row in report["paired_post_differences"]:
+        lines.append(
+            f"| {row['scenario']} | {row['policy']} | "
+            f"{row['n_seed_pairs']} | "
+            f"{row['mean_paired_delta_mae_seconds']:+.2f} | "
+            f"{row['seeds_better_than_frozen']} |"
+        )
+    lines.extend([
+        "",
+        "## Residual-detector behavior",
+        "",
+        "| Scenario | Seed | Before-boundary alarms | Post-boundary alarms | First post-alarm delay (samples) |",
+        "|---|---:|---:|---:|---:|",
+    ])
+    for run in report["replications"]:
+        detector=run["detector"]
+        delay=detector["first_after_boundary_delay"]
+        lines.append(
+            f"| {run['scenario']} | {run['seed']} | "
+            f"{detector['before_boundary_alarms']} | "
+            f"{detector['after_boundary_alarms']} | "
+            f"{'No detected alarm' if delay is None else delay} |"
+        )
+    lines.extend([
+        "",
+        "## Interpretation rules and validity limits",
+        "",
+        "- This is a reproducible mechanism check, not a validated sports-science simulator.",
+        "- A detector alarm is not evidence of a real athlete's fitness change.",
+        "- The three default seeds do not support a statistical superiority claim.",
+        "- All results assume an immediately available race result after every prediction.",
+        "- Stationary and noise-only scenarios are essential negative controls.",
+        "- Do not choose a strategy by inspecting the held-out boundary results and then report those same results as unbiased test evidence.",
+        "- Before real use: prespecify expanded seeds/severities, add delayed outcomes, "
+        "evaluate genuine consented race labels chronologically and out of athlete.",
+        "",
+    ])
+    return "\n".join(lines)
+
+
 def save_report(report, output_dir):
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -366,7 +447,9 @@ def save_report(report, output_dir):
         writer = csv.DictWriter(f, fieldnames=columns)
         writer.writeheader()
         writer.writerows({k: row[k] for k in columns} for row in report["summary"])
-    return str(output/"shift-summary.json"), str(output/"shift-metrics.csv")
+    (output/"shift-report.md").write_text(
+        render_research_report(report), encoding="utf-8")
+    return str(output/"shift-summary.json"), str(output/"shift-metrics.csv"), str(output/"shift-report.md")
 
 
 def main(argv=None):
