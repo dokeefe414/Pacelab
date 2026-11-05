@@ -1,6 +1,7 @@
 /** PaceLab v0.7 activity detail, bulk imports, analytics and grounded assistant. */
 import {formatTime} from './core.js';
 import {parseLocalActivity} from './local-import.js';
+import {labeledRaceRows,localRaceReadiness,trainingCSV,recentRaceBaseline} from './local-research.js';
 import {advancedStats,routePath,linePath,paceTrace,compareDateWindows,heartRateBands,lapPaces,localTrainingAnswer} from './intelligence-core.js';
 import {apiIsConnected,uploadActivity,uploadBulkArchive,fetchWorkoutDetail,updateRemoteWorkout,askAssistant,recordedRacePrediction,fetchRaceFeatures,downloadRaceTrainingCSV,fetchRaceDataReadiness} from './api.js';
 
@@ -17,8 +18,22 @@ export function initIntelligence(options){
   $('#download-race-data').addEventListener('click',async ()=>{
     const output=$('#training-feature-status');
     try{
-      const count=await downloadRaceTrainingCSV();
-      output.textContent='Exported '+count+' labeled race rows. The ML experiment currently requires at least 60 real labeled race results for training.';
+      if(apiIsConnected()){
+        const count=await downloadRaceTrainingCSV();
+        output.textContent='Exported '+count+' eligible rows from your private account. These are research inputs, not a trained prediction.';
+      }else{
+        const rows=labeledRaceRows(context.getWorkouts());
+        if(!rows.length){
+          output.textContent='No eligible labeled races yet. Mark an imported run as Race and log at least five non-race training sessions in its prior 28 days, including Easy or Recovery.';
+          return;
+        }
+        const csv=trainingCSV(rows);
+        const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+        const anchor=document.createElement('a');anchor.href=url;anchor.download='pacelab-local-race-training.csv';
+        anchor.click();
+        setTimeout(()=>URL.revokeObjectURL(url),2000);
+        output.textContent='Exported '+rows.length+' locally computed race rows. No training data was sent to a server.';
+      }
     }catch(err){output.textContent=err.message;}
   });
   $('#assistant-form').addEventListener('submit',askTrainingAssistant);
@@ -231,7 +246,14 @@ async function handleFiles(event){
 }
 async function loadRaceBaseline(){
   const box=$('#historical-race-result');
-  if(!apiIsConnected()){box.textContent='Sign in and log a Race workout to use your recorded race history.';return;}
+  if(!apiIsConnected()){
+    const r=recentRaceBaseline(context.getWorkouts(),Number($('#target-distance').value));
+    if(!r){box.textContent='No recent locally recorded Race workout at a supported distance. Mark an imported workout as Race in its Details panel.';return;}
+    box.innerHTML='<div class="prediction-output"><span>RECENT RACE · LOCAL FORMULA BASELINE</span><strong>'+
+      formatTime(r.estimatedSeconds)+'</strong><small>Based on a '+formatTime(r.reference.seconds)+
+      ' race on '+escapeHTML(r.reference.date)+'. '+escapeHTML(r.warning)+'</small></div>';
+    return;
+  }
   box.textContent='Analyzing your recorded race history…';
   try{
     const dist=Number($('#target-distance').value);
@@ -243,7 +265,20 @@ async function loadRaceBaseline(){
 }
 async function fillTrainingFeatures(){
   const box=$('#training-feature-status');
-  if(!apiIsConnected()){box.textContent='Sign in to derive training features from your logged runs.';return;}
+  if(!apiIsConnected()){
+    const date=new Date(),cutoff=new Date(date.getFullYear(),date.getMonth(),date.getDate()-27);
+    const day=x=>[x.getFullYear(),String(x.getMonth()+1).padStart(2,'0'),String(x.getDate()).padStart(2,'0')].join('-');
+    const recent=context.getWorkouts().filter(w=>w.date>=day(cutoff)&&w.date<=day(date));
+    const easy=recent.filter(w=>w.type==='Easy'||w.type==='Recovery');
+    const miles=easy.reduce((s,w)=>s+w.distanceMiles,0);
+    if(!recent.length||!miles){box.textContent='Log recent Easy/Recovery workouts to derive experimental features.';return;}
+    $('#ml-mileage').value=(recent.reduce((s,w)=>s+w.distanceMiles,0)/4).toFixed(2);
+    $('#ml-pace').value=formatTime(easy.reduce((s,w)=>s+w.durationSeconds,0)/miles);
+    $('#ml-hard').value=recent.filter(w=>w.type==='Tempo'||w.type==='Intervals'||w.type==='Race').length;
+    $('#ml-long').value=Math.max(...recent.map(w=>w.distanceMiles)).toFixed(2);
+    box.textContent='Filled from '+recent.length+' browser-local workouts. A trained model still requires an independently hosted and evaluated API.';
+    return;
+  }
   try{
     const r=await fetchRaceFeatures(Number($('#ml-event').value));
     if(!r.complete){box.textContent='Not enough Easy / Recovery training data in the last 28 days to calculate easy pace.';return;}
@@ -306,13 +341,10 @@ function compareTrainingPeriods(event){
 
 async function checkRaceDataReadiness(){
   const output=$('#race-readiness-status');
-  if(!apiIsConnected()){
-    output.textContent='Sign into your private account to check your recorded race training history.';
-    return;
-  }
-  output.textContent='Checking real labeled race history…';
+  const local=!apiIsConnected();
+  output.textContent=local?'Checking browser-local labeled race history…':'Checking your private account race history…';
   try{
-    const info=await fetchRaceDataReadiness();
+    const info=local?localRaceReadiness(context.getWorkouts()):await fetchRaceDataReadiness();
     const count=info.eligibleLabeledRows;
     const byEvent=Object.entries(info.eligibleByEventMeters||{}).map(
       ([distance,n])=>distance+'m: '+n).join(', ')||'none';
