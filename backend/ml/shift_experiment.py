@@ -240,6 +240,37 @@ def summarize_run(rows, forecasts, *, shift_at: int):
     }
 
 
+def paired_post_differences(replications):
+    """Report seed-paired post-boundary MAE differences versus frozen.
+
+    Negative seconds = policy improves over the frozen model ON THAT
+    SYNTHETIC SEED. No p-values or population significance are implied.
+    """
+    grouped = defaultdict(list)
+    for run in replications:
+        reference = run["policies"]["frozen"]["after_boundary"]["mae_seconds"]
+        for policy in POLICIES:
+            if policy == "frozen":
+                continue
+            alternative = run["policies"][policy]["after_boundary"]["mae_seconds"]
+            grouped[(run["scenario"], policy)].append({
+                "seed":run["seed"],
+                "delta_mae_seconds":round(alternative-reference, 3),
+            })
+    comparisons = []
+    for (scenario, policy), differences in sorted(grouped.items()):
+        deltas = [item["delta_mae_seconds"] for item in differences]
+        comparisons.append({
+            "scenario":scenario, "policy":policy,
+            "seed_pairs":differences,
+            "n_seed_pairs":len(deltas),
+            "mean_paired_delta_mae_seconds":round(mean(deltas), 3),
+            "seeds_better_than_frozen":sum(value < 0 for value in deltas),
+            "interpretation":"Negative means better than frozen on this synthetic cohort; this is not an athlete efficacy estimate.",
+        })
+    return comparisons
+
+
 def run_benchmark(*, seeds=DEFAULT_SEEDS, scenarios=SCENARIOS,
                   n: int = 220, initial_train: int = 80,
                   shift_at: int = 140, window: int = 48,
@@ -309,6 +340,7 @@ def run_benchmark(*, seeds=DEFAULT_SEEDS, scenarios=SCENARIOS,
             ],
         },
         "summary":summary, "replications":raw,
+        "paired_post_differences":paired_post_differences(raw),
     }
 
 

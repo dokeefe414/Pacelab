@@ -91,6 +91,15 @@ def test_benchmark_produces_only_tagged_synthetic_metrics(tmp_path):
     assert report["metadata"]["research_status"]=="method_prototype_not_athlete_validated"
     assert len(report["summary"])==2*4*2
     assert len(report["replications"])==2
+    assert len(report["paired_post_differences"])==2*3
+    for comparison in report["paired_post_differences"]:
+        assert comparison["n_seed_pairs"]==1
+        assert comparison["seed_pairs"][0]["seed"]==2
+        base=next(r for r in report["replications"]
+                  if r["scenario"]==comparison["scenario"])
+        observed=base["policies"][comparison["policy"]]["after_boundary"]["mae_seconds"]
+        frozen=base["policies"]["frozen"]["after_boundary"]["mae_seconds"]
+        assert abs(comparison["mean_paired_delta_mae_seconds"]-(observed-frozen))<0.002
     for record in report["summary"]:
         assert record["n"]>0
         assert record["mae_seconds"]>=0
