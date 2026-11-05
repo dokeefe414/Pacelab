@@ -28,7 +28,7 @@ from sklearn.preprocessing import StandardScaler
 from .evaluate import numerical_metrics
 
 SCENARIOS = ("stationary", "covariate", "concept", "noise", "combined")
-POLICIES = ("frozen", "periodic", "rolling", "change_triggered")
+POLICIES = ("naive_last_race", "frozen", "periodic", "rolling", "change_triggered")
 FEATURES = (
     "event_meters", "weekly_miles_4w",
     "average_easy_pace_seconds_per_mile",
@@ -140,7 +140,7 @@ def prequential_forecasts(rows, *, initial_train: int = 80,
                           window: int = 48, periodicity: int = 20,
                           detector_threshold: float = 8.0,
                           detector_slack: float = 0.35):
-    """Run four forecasting policies with a strict prediction→observation order.
+    """Run four learned policies and a naive baseline with causal updates.
 
     The event at t is *predicted* from data indexed <t. Once its true finish
     is known, the detector may retrain with rows <=t, effective from t+1.
@@ -187,6 +187,15 @@ def prequential_forecasts(rows, *, initial_train: int = 80,
             "rolling": (rolling, t - 1),
             "change_triggered": (adaptive, adaptive_end),
         }
+        # Simple no-ML comparator for a single fixed (5K) race distance.
+        # At t, only the previous already-known finish is visible.
+        last_finish=float(rows[t-1][2])
+        results["naive_last_race"].append({
+            "index":t, "date":rows[t][0].isoformat(),
+            "actual":actual, "prediction":last_finish,
+            "absolute_error":abs(actual-last_finish),
+            "training_end_index":t-1,
+        })
         for name, (model, last_seen) in models.items():
             estimate = float(model.predict(x)[0])
             results[name].append({
@@ -326,6 +335,7 @@ def run_benchmark(*, seeds=DEFAULT_SEEDS, scenarios=SCENARIOS,
             "sliding_window":window, "periodicity":20,
             "severity":strength,
             "policy_definitions":{
+                "naive_last_race":"Last previously observed 5K finish; no ML training",
                 "frozen":"Ridge+standardization fitted once to first labeled prefix",
                 "periodic":"Ridge refitted on all earlier labels every 20 outcomes",
                 "rolling":"Ridge refitted using most recent 48 prior outcomes each prediction",

@@ -30,8 +30,8 @@ The application is where runners explore their records; the research is
 where we test whether prediction methods actually work.
 
 Our new [Distribution-Shift Research Track](docs/distribution-shift-study.md)
-tests frozen, periodically updated, rolling-window and observed-error-triggered
-models against controlled synthetic shifts. Every forecast is generated
+tests a naive previous-race baseline alongside frozen, periodically updated,
+rolling-window and observed-error-triggered models under controlled shifts. Every forecast is generated
 **before** the result is revealed, and each experiment has reproducible
 seeds, baselines, negative controls and openly documented limitations.
 

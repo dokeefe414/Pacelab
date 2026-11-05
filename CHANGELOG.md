@@ -7,8 +7,8 @@ deployment or race-model validation. See README for the current limits.
 
 - Built a seed-paired, strictly synthetic generator with stationary,
   covariate, relationship, noise and combined interventions.
-- Compared frozen, scheduled, rolling-window and residual-triggered
-  Ridge update strategies with causal prequential evaluation.
+- Compared a naive last-race forecast with frozen, scheduled, rolling
+  and residual-triggered Ridge policies using causal prequential evaluation.
 - Added before/after MAE/RMSE, paired post-shift differences, false alarms
   and first post-intervention detection delay diagnostics.
 - Verified reproducibility and enforced no-future-label leakage in tests.

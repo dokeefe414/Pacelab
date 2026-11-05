@@ -89,9 +89,9 @@ def test_benchmark_produces_only_tagged_synthetic_metrics(tmp_path):
                          n=108,initial_train=40,shift_at=65,window=24)
     assert report["metadata"]["data_source"]=="controlled_synthetic_generator_only"
     assert report["metadata"]["research_status"]=="method_prototype_not_athlete_validated"
-    assert len(report["summary"])==2*4*2
+    assert len(report["summary"])==2*5*2
     assert len(report["replications"])==2
-    assert len(report["paired_post_differences"])==2*3
+    assert len(report["paired_post_differences"])==2*4
     for comparison in report["paired_post_differences"]:
         assert comparison["n_seed_pairs"]==1
         assert comparison["seed_pairs"][0]["seed"]==2

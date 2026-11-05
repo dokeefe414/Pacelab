@@ -95,13 +95,18 @@ and 3. Response curves across severity levels are a future research
 extension; selecting severity based on desired model performance is not
 allowed.
 
-## Four controlled policies
+## Naive comparator plus four controlled update policies
 
-All policies use the **same model class**: StandardScaler + Ridge regression
-with alpha 12. Only the update policy changes.
+The simple **last-known-race** baseline uses the most recent *already
+observed* 5K finish as its next 5K forecast, without fitting an ML model.
+It provides a necessary challenge to more complex learned strategies.
+
+The four learned policies use the **same model class**: StandardScaler
++ Ridge regression with alpha 12. Only the update policy changes.
 
 | Policy | Training schedule | Expected tradeoff |
 |---|---|---|
+| Naive last race | Repeat the last already observed 5K finish | No fitting; responsive but noisy |
 | Frozen | Fit first 80 labeled points once | Low compute, no shift adaptation |
 | Periodic | Refit on all previously observed labels every 20 results | Tracks slow trends but retains old regimes |
 | Rolling | Refit on most recent 48 labels before every forecast | Responsive, expensive, can forget stable history |
