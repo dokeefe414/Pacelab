@@ -22,7 +22,7 @@ def interval_coverage_report(actual, predicted, radius, confidence_z=1.96):
     if not all(isfinite(float(x)) for x in [*actual, *predicted]):
         raise ValueError("Predictions and outcomes must be finite")
     n=len(actual)
-    hits=sum(abs(y-p)<=radius for y,p in zip(actual,predicted))
+    hits=int(sum(bool(abs(float(y)-float(p))<=radius) for y,p in zip(actual,predicted)))
     p=hits/n
     z2=confidence_z**2
     denom=1+z2/n
