@@ -10,6 +10,8 @@ private beta. **The GitHub Pages preview does not host personal accounts.**
 | [System architecture](architecture.md) | Data flow, storage, schemas and threat boundaries |
 | [API reference](api.md) | Authentication, workout/import and analysis endpoints |
 | [Browser-local wearable import](browser-import.md) | Private FIT/GPX/TCX decoding, backup, consent and limits |
+| [Athlete Studio](athlete-studio.md) | Monthly/weekly training trends, sensor charts, comparable laps and accessibility |
+| [Production beta gates](production-beta-checklist.md) | Hosted account, privacy, security, backups, monitoring and ML sign-off |
 | [Testing](testing.md) | Unit, integration, browser and synthetic FIT tests |
 | [ML methodology](ml-methodology.md) | Dataset provenance, leakage, models, metrics and pitfalls |
 | [Research data governance](race-data-governance.md) | Consent, pseudonyms, readiness thresholds and reporting |

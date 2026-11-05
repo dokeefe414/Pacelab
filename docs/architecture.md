@@ -1,4 +1,4 @@
-# PaceLab architecture and data flow — v0.7
+# PaceLab architecture and data flow — v0.9
 
 > **v0.8 distinction:** GitHub Pages can parse real exported FIT/GPX/TCX
 > files entirely within the browser. It discards GPS coordinates and raw
@@ -47,7 +47,7 @@ flowchart TB
 | Layer | Implementation | Responsibility |
 |---|---|---|
 | UI | HTML, CSS, JavaScript ES modules | Dashboard, race formula, charts, local sample mode |
-| Pure analytics | src/core.js, intelligence-core.js, performance.js | Pace/time, week bins, consistency, PR history |
+| Pure analytics | src/core.js, intelligence-core.js, performance.js, athlete-studio-core.js | Pace/time, calendar-month bins, completed-week comparisons, device laps and recorded sensors |
 | API client | src/api.js | Account token, authenticated workout requests |
 | API | backend/app/main.py and routers | Validation, identity, import, insights and predictions |
 | Persistence | SQLAlchemy, PostgreSQL / development SQLite | User-owned workout and sensor records |
@@ -169,3 +169,19 @@ No live API is implied by the YAML file.
 
 See [Render deployment](render-deployment.md) and the
 [security release checklist](../SECURITY.md).
+
+## v0.9 Athlete Studio
+
+The browser's `src/athlete-studio-core.js` runs deterministic calendar
+and wearable transformations. `src/athlete-studio.js` renders accessible
+SVG/monthly bar charts and the workout telemetry/Lap Lab. The backend's
+`backend/app/periods.py` provides matching authenticated monthly and
+completed-four-week summaries without requiring a network connection
+for browser-local mode.
+
+Recorded GPS coordinates remain absent from browser-local storage.
+The optional authenticated backend has its own more permissive,
+explicitly consented GPS retention. Neither route maps nor unsupported
+sensor readings are inferred.
+
+[Read the full Athlete Studio guide](athlete-studio.md).

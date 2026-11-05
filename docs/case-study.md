@@ -36,6 +36,12 @@ duplicate detection.
 
 ### Athlete intelligence
 
+- New interactive Athlete Studio: monthly mileage, equal completed-week
+  comparisons, distance-weighted Easy pace, and sample-labeled telemetry
+- Distance-aware lap analysis that does not rank recovery-size laps against
+  full-distance efforts
+- Mobile keyboard/backdrop navigation and visualizations with readable
+  text fallbacks
 - Weekly mileage, training mix and 12-week consistency calendar
 - Workout-to-workout comparisons with normalized pace and HR where recorded
 - Personal race progression limited to workouts explicitly marked Race

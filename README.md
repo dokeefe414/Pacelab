@@ -13,11 +13,12 @@ by **Daniel O'Keefe**, combining collegiate distance-running interests
 with full-stack APIs, wearable activity data, interactive analytics,
 test automation and responsible prediction research.
 
-> **Current status: v0.8 local-first athlete beta.** The browser site
-> is live, including local FIT/GPX/TCX imports, analysis and backups.
-> **No production account API is hosted**; the optional Render Blueprint
-> still requires explicit provisioning and payment authorization.
-> Research ML remains exploratory, not a validated individualized predictor.
+> **Current status: v0.9 Athlete Studio.** The browser site supports
+> real local FIT/GPX/TCX imports, deeper workout telemetry, monthly/weekly
+> analysis, race history and private backups. All of this works without
+> installing software or creating an account. **No cloud account API has
+> been deployed**; Render still requires owner approval, hosting costs,
+> security controls and verified deployment. ML remains experimental.
 
 ## Try it in under a minute
 
@@ -26,12 +27,15 @@ test automation and responsible prediction research.
    activity data is synthetic, not a real person's location or results.
 3. Open **Workout log → FIT / GPX / TCX** and choose an exported running
    file. Review the privacy warning, then import it entirely in-browser.
-4. Open an imported workout's **Details** to view timing, laps and sensor
-   samples. If it was a race, change the type to **Race** and save.
-5. Visit **Race predictor** to view a recent-race formula estimate or
+4. Open an imported workout's **Details**, switch between recorded sensor
+   charts, and explore the distance-aware Lap Lab. If it was a race,
+   change its type to **Race** and save.
+5. Visit **Insights → Athlete Studio** to view monthly mileage and fair
+   completed-week comparisons. Switch the plot to Easy/Recovery pace.
+6. Visit **Race predictor** to view a recent-race formula estimate or
    check your real race-data readiness and export pre-race research rows.
-6. Ask the **Training assistant** about mileage, pace or recorded races.
-7. Use **Backup local data** to protect your browser-stored training log.
+7. Ask the **Training assistant** about mileage, pace or recorded races.
+8. Use **Backup local data** to protect your browser-stored training log.
 
 Nothing in the local import flow is uploaded to PaceLab's servers.
 The browser saves workout and sensor summaries; **not** original file
@@ -45,7 +49,7 @@ The full authenticated multi-device system still needs separate HTTPS hosting.
 | Experience | What it does | Available in Pages demo? |
 |---|---|---|
 | Running dashboard | Weekly mileage, training duration and training mix | Yes |
-| Athlete performance center | 12-week activity calendar, workout comparisons, event-specific race progression | Yes |
+| Athlete Studio | Monthly mileage, equal completed-week comparisons, easy pace, lap lab, sensor explorer and race progression | **Yes, interactive browser analytics** |
 | Workout log | Import, edit, classify, filter and compare exported real runs | Yes, local storage |
 | Race equivalent | Riegel conversion between 800m, mile, 3K, 5K, 8K and 10K | Yes, mathematical baseline |
 | Grounded assistant | Data-grounded statistics with optional per-question AI opt-in | Yes, deterministic local mode |
@@ -67,7 +71,10 @@ zones, fatigue scores or medical advice.
 
 Race progression includes actual **Race-labeled** workouts close to the
 selected event distance. A fictional sample log without races does not
-fabricate personal records.
+fabricate personal records. **Athlete Studio** plots only recorded sensor
+data, separates short recovery-size laps, and excludes partial weeks
+from the equal-length four-week comparison. See
+[the v0.9 Athlete Studio technical guide](docs/athlete-studio.md).
 
 ## Engineering architecture
 
@@ -237,6 +244,8 @@ Start with the [documentation index](docs/README.md).
 |---|---|
 | [System architecture](docs/architecture.md) | Component diagram, DB model, ownership, privacy boundaries |
 | [Privacy-first browser imports](docs/browser-import.md) | FIT/GPX/TCX parsing, local sensor storage, backup and privacy limits |
+| [Athlete Studio v0.9](docs/athlete-studio.md) | Monthly/weekly analytics, interactive sensors, lap rules and accessibility |
+| [Production beta checklist](docs/production-beta-checklist.md) | Cloud, privacy, monitoring, backup and research sign-off gates |
 | [REST API reference](docs/api.md) | Routes, auth, payloads, errors and data units |
 | [Testing & CI](docs/testing.md) | Frontend, browser, backend, FIT and database tests |
 | [ML methodology](docs/ml-methodology.md) | Features, leakage control, baselines and uncertainty |
@@ -251,18 +260,20 @@ Start with the [documentation index](docs/README.md).
 
 ## Current boundaries and roadmap
 
-- **Available now:** Public no-installation site with sample or real
-  browser-local FIT/GPX/TCX running data, summary-only GPS privacy,
-  workout comparisons, local race preparation and private JSON backups.
+- **Available now:** Public no-installation site with real, privacy-first
+  FIT/GPX/TCX analysis, Athlete Studio's monthly and completed-week
+  trends, interactive sensor and lap exploration, local race research
+  and private JSON backups.
   The authenticated backend source code and its research tools are tested.
 - **Not yet live:** Public account/database service, automatic provider
   synchronization and a validated personalized ML forecast.
 - **Before public accounts:** Centralized rate limits, stronger session
   revocation/recovery, explicit privacy consent, incident response,
   encrypted scheduled backups and an independent security review.
-- **Next research step:** Evaluate true chronological and athlete-disjoint
-  accuracy using consented labeled races. Never confuse an attractive
-  prediction plot with a trustworthy model.
+- **Next research step:** Evaluate chronological and athlete-disjoint
+  accuracy on consented labeled races, report Wilson coverage uncertainty,
+  flag feature drift and suppress tiny per-event test errors. An
+  attractive prediction plot is not evidence of forecasting validity.
 
 **Built by Daniel O'Keefe** · [Live sample-data demo](https://dokeefe414.github.io/Pacelab/) ·
 [Source repository](https://github.com/dokeefe414/Pacelab)
