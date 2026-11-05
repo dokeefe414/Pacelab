@@ -92,14 +92,8 @@ def train(csv_path, output_path):
     known=[(actual,pred) for actual,pred in zip(test_y,riegel_predictions) if pred is not None]
     riegel_mae=float(mean(abs(y-p) for y,p in known)) if known else None
     test_median=round(float(mean_absolute_error(test_y,models["median_baseline"].predict(test_x))),2)
-    events={}
-    for meters in sorted(set(float(r[1][0]) for r in test_rows)):
-        indices=[i for i,r in enumerate(test_rows) if float(r[1][0])==meters]
-        if indices:
-            events[str(int(meters))]={
-                "n":len(indices),
-                "mae_seconds":round(float(np.mean(np.abs(test_y[indices]-predictions[indices]))),2),
-            }
+    # Suppress unstable per-event MAE when fewer than five held-out results exist.
+    events=event_error_support(test_rows,list(predictions),min_support=5)
     backtest=chronological_backtest(rows)
     from .athlete_groups import athlete_disjoint_evaluation
     athlete_evaluation=athlete_disjoint_evaluation(csv_path)
@@ -133,7 +127,7 @@ def train(csv_path, output_path):
         "test_interval_coverage":round(coverage,3),
         "interval_coverage_reliability":interval_coverage_report(list(test_y),list(predictions),half_width),
         "post_holdout_feature_drift":feature_drift(train_rows,test_rows,FEATURES),
-        "test_event_support":event_error_support(test_rows,list(predictions),min_support=5),
+        "test_event_support":events,
         "interval_half_width_seconds":round(half_width,2),
         "test_per_event":events,
         "rolling_backtest":backtest,

@@ -93,7 +93,16 @@ function sensorPlot(track,selection){
     ' samples were recorded for this activity. Missing values are not estimated.</p>';
   const geometry=chartGeometry(stats.points);
   if(!geometry)return '<p class="body-copy">Not enough observations for a sensor plot.</p>';
-  const {width,height,pad,path,yMin,yMax,xMax}=geometry;
+  const {width,height,pad,xMax}=geometry;
+  // Draw separate recorded segments instead of implying that missing data
+  // were measured in a long sensor gap.
+  const gaps=stats.points.slice(1).map((p,i)=>p.elapsed-stats.points[i].elapsed)
+    .filter(n=>Number.isFinite(n)&&n>0).sort((a,b)=>a-b);
+  const medianGap=gaps[Math.floor(gaps.length/2)]??0;
+  const threshold=Math.max(60,medianGap*4);
+  const path=geometry.coords.map((p,i)=>
+    (i===0||(stats.points[i].elapsed-stats.points[i-1].elapsed)>threshold?'M':'L')+
+    p.x+','+p.y).join(' ');
   const axis=(v)=>selection==='paceSeconds'?formatTime(v):fmt(v,0);
   const title=stats.label+' vs elapsed time';
   const circles=geometry.coords.filter((_,i)=>i%Math.max(1,Math.ceil(geometry.coords.length/30))===0)
