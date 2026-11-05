@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from .periods import month_summaries, completed_four_week_comparison
 from datetime import date, timedelta
 
 INTENSITY_WEIGHTS = {
@@ -75,6 +76,10 @@ def summarize_training(workouts, today=None):
             "milesByType": {key: round(val, 2) for key,val in sorted(mixed.items())},
         },
         "weeks": rows, "personalBests": personal_bests(workouts),
+        "athleteStudio": {
+            "monthly": month_summaries(workouts,today=today,months=6),
+            "completedFourWeekComparison": completed_four_week_comparison(workouts,today=today),
+        },
         "caveats": [
             "Data excludes future-dated workouts and depends on what has been logged.",
             "Weighted training minutes are illustrative effort proxies, not a validated medical or physiological load metric.",
