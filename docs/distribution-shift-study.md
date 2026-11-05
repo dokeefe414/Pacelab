@@ -171,7 +171,7 @@ From repository root on any system with Python 3.12:
 
 ~~~bash
 cd backend
-python -m pip install -r requirements-ml.txt
+python -m pip install -r requirements-dev.txt
 python -m pytest -q tests/test_shift_experiment.py
 python -m ml.shift_experiment --output-dir /tmp/pacelab-shift-results
 ~~~
@@ -180,7 +180,7 @@ Windows PowerShell equivalent for the benchmark:
 
 ~~~powershell
 cd backend
-python -m pip install -r requirements-ml.txt
+python -m pip install -r requirements-dev.txt
 python -m pytest -q tests/test_shift_experiment.py
 python -m ml.shift_experiment --output-dir shift-results
 ~~~
