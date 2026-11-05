@@ -40,6 +40,20 @@
     </div><div id="studio-week-chart" aria-live="polite"></div>
     <p id="studio-week-summary" class="body-copy"></p><p id="studio-coverage" class="body-copy studio-hint"></p></article>
   </div>
+<article class="panel research-panel" id="race-research" aria-label="Race forecast evaluation">
+  <div class="panel-title"><div><div class="eyebrow" id="research-source"></div><h2>Race evidence lab</h2></div></div>
+  <p class="body-copy" id="research-summary" aria-live="polite"></p>
+  <p class="body-copy">A replay of your race history, not a validated forecast for your next race. Check official distances, finish times and Race labels before interpreting results.</p>
+  <div class="research-controls"><label for="research-event">Distance <select id="research-event"><option value="all">All distances</option></select></label>
+  <label for="research-method">Forecast method <select id="research-method"></select></label></div>
+  <div id="research-metrics"></div>
+  <p class="body-copy">Δ MAE compares each method with Riegel on the same races; negative favors that method. Compare paired counts before interpreting differences. No winner is selected automatically.</p>
+  <div id="research-chart"></div><h3>Race-by-race evidence</h3><div id="research-races"></div>
+  <details class="research-race"><summary>Inspect data quality and exclusions</summary><div id="research-audit"></div></details>
+  <p class="body-copy">Missing heart rate does not exclude a run. Possible duplicates and invalid results are excluded from this analysis, without changing your workout log. Course, weather and effort are not modeled.</p>
+  <div class="research-controls"><button class="secondary" id="research-json">Download private results JSON</button><button class="secondary" id="research-markdown">Download private report</button></div>
+  <p class="body-copy">Downloads contain dates and performance history. They omit GPS, notes and account identifiers. All calculations run in your browser; these reports are not uploaded.</p>
+</article>
 </section><div class="intelligence-stack"><article class="panel"><div class="panel-title"><div><div class="eyebrow">TRAINING LOAD · ILLUSTRATIVE</div><h2>12-week weighted training minutes</h2></div></div><div id="load-chart"></div><p class="body-copy">Workout minutes weighted by activity type (Easy ×1, Tempo ×1.35, Intervals ×1.5, etc.). This is not a validated physiological load score or injury-risk predictor.</p></article><article class="panel"><div class="panel-title"><h2>Recent training summary</h2></div><div id="expanded-metrics" class="intelligence-stats"></div><div id="pace-trend-chart"></div><p id="pace-summary" class="body-copy"></p><p id="heart-rate-summary" class="body-copy"></p></article><article class="panel"><div class="panel-title"><h2>Compare two training periods</h2></div>
 <form id="compare-form"><div class="form-grid">
 <label>First period starts<input id="compare-start-a" type="date" required></label>

@@ -1,3 +1,4 @@
+import {initRaceResearch,renderRaceResearch} from './race-research-view.js';
 /** Accessible, self-contained athlete studio visualizations. */
 import {formatTime} from './core.js';
 import {monthlyTraining,weeklyPerformance,lapDiagnostics,sensorSeries,
@@ -55,6 +56,7 @@ function weekPlot(series,key){
 }
 export function initAthleteStudio(context){
   getWorkouts=context.getWorkouts;
+  initRaceResearch(context);
   $('#studio-months').addEventListener('change',event=>{
     visibleMonths=Number(event.target.value);renderAthleteStudio();
   });
@@ -64,6 +66,7 @@ export function initAthleteStudio(context){
 }
 export function renderAthleteStudio(){
   const all=getWorkouts();
+  renderRaceResearch();
   const monthly=monthlyTraining(all,new Date(),visibleMonths);
   const weekly=weeklyPerformance(all);
   $('#studio-month-chart').innerHTML=monthlyBars(monthly);

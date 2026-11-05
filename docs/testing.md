@@ -161,3 +161,11 @@ contain no original FIT files, routes or athlete identifiers.
 
 See [Athlete Studio](athlete-studio.md) and
 [ML methodology](ml-methodology.md) for definitions and limitations.
+
+## Real-race evaluation regressions
+
+`npm test` includes audit exclusions, chronology, same-day/future leakage checks,
+frozen/expanding/rolling policies, paired errors, privacy and CLI reproducibility.
+`e2e/race-research.spec.js` exercises the lab in browser-local mode and downloads.
+CI generates reports from `fixtures/race-study-synthetic.json` only. No private
+athlete data is a test fixture. See [protocol and CLI](real-race-evaluation.md).

@@ -109,3 +109,9 @@ have **not** been independently certified.
 See [privacy-first imports](browser-import.md),
 [research methods](ml-methodology.md), and
 [security controls](../SECURITY.md).
+
+## Race evidence lab
+
+Insights now includes a private data audit, race-by-race forecast replay,
+method/event filters and downloadable reports. See [real-race evaluation](real-race-evaluation.md)
+for the fixed causal protocol, exclusions and interpretation limits.

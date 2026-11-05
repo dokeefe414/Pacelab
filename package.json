@@ -10,7 +10,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test",
     "test:e2e": "playwright test",
-    "check:docs": "node scripts/check-doc-links.mjs"
+    "check:docs": "node scripts/check-doc-links.mjs",
+    "research:evaluate": "node scripts/evaluate-races.mjs"
   },
   "devDependencies": {
     "vite": "^6.3.0",
