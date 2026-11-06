@@ -230,3 +230,17 @@
   .top-actions #add-workout{font-size:11px;padding:10px}
 }
 @media(prefers-reduced-motion:reduce){.studio-month-bar{transition:none!important}}
+
+/* Race evidence lab: responsive tables and keyboard-native disclosures. */
+.research-panel{margin-top:24px;min-width:0}
+.research-controls{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0;align-items:center}
+.research-controls label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.research-controls select{max-width:100%;background:#142530;color:#e4edf3;border:1px solid #42606b;border-radius:8px;padding:9px}
+.research-scroll{overflow:auto;max-height:420px}
+.research-scroll caption{text-align:left;padding:12px 0;color:#b8cbd5}
+.research-scroll th{white-space:nowrap}
+.research-race{border-top:1px solid #314653;padding:14px 0;overflow-wrap:anywhere}
+.research-race summary{cursor:pointer;line-height:1.6}
+.research-race p,.research-race li{color:#bbcbd4;line-height:1.6}
+#research-chart svg{width:100%;max-height:300px}
+.research-panel button:focus-visible,.research-panel summary:focus-visible,.research-panel select:focus-visible{outline:2px solid #b5f36c;outline-offset:4px}

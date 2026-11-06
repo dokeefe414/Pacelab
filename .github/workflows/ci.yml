@@ -15,3 +15,11 @@ jobs:
       - run: npm test
       - run: npm run check:docs
       - run: npm run build
+      - name: Reproduce synthetic race-evaluation report
+        run: npm run research:evaluate -- --input fixtures/race-study-synthetic.json --output-dir private-results --as-of 2025-12-31 --source synthetic
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-race-evaluation
+          path: private-results/
+          if-no-files-found: error
+          retention-days: 7

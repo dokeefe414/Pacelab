@@ -40,6 +40,16 @@ only consider putting adaptive machine learning into the public race
 predictor after genuine labeled races demonstrate reliable held-out
 performance and honest uncertainty.
 
+## Replay forecasts against your own races
+
+The **[Race evidence lab](docs/real-race-evaluation.md)** in Insights audits
+records, excludes suspect results, and compares prior-race/Riegel baselines with
+frozen, expanding and rolling ridge models. Each prediction uses only earlier
+dates. Inspect forecast errors, source races and prior training, then download
+private JSON/Markdown reports or reproduce them with `npm run research:evaluate`.
+Insufficient history is explained; synthetic examples never establish real-athlete
+accuracy. This adds no hosting requirement or change to the existing predictor.
+
 ## Try it in under a minute
 
 1. **[Launch the website](https://dokeefe414.github.io/Pacelab/)**.

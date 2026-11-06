@@ -27,3 +27,8 @@ backups/
 *.dump
 *.pgdump
 *.backup
+
+# Private retrospective research exports
+private-results/
+race-evaluation.json
+race-report.md

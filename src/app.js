@@ -175,7 +175,7 @@ $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const 
 initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity,updateLocalActivity});
 initTour(nav);
 initPerformance({getWorkouts:()=>workouts});
-initAthleteStudio({getWorkouts:()=>workouts});
+initAthleteStudio({getWorkouts:()=>workouts,getUsingSample:()=>usingSample});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());
 load();render();
 if(hasSavedSession())restoreSession().then(async user=>{if(user){try{await refreshRemote();toast('Account session restored.');}catch(err){logout();load();render();toast('Could not restore account data: '+err.message);}}}).catch(console.error);
