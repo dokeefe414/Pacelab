@@ -37,7 +37,7 @@ jobs:
       - name: Run fixed-protocol synthetic benchmark
         run: python -m ml.shift_experiment --output-dir shift-results --seeds 7,19,41 --strength 1
       - name: Archive synthetic results (no private athlete data)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pacelab-synthetic-shift-research
           path: |
