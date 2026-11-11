@@ -27,7 +27,7 @@ function updateLocalActivity(id,updates){
   if(apiIsConnected())throw Error('Use your authenticated server to edit this workout.');
   const index=workouts.findIndex(w=>w.id===id);
   if(index<0)throw Error('Workout not found');
-  const updated=validateWorkout({...workouts[index],type:updates.type,notes:updates.notes});
+  const updated=validateWorkout({...workouts[index],...updates});
   const next=[...workouts];next[index]=updated;
   try{localStorage.setItem(KEY,JSON.stringify(next));}
   catch{throw Error('Browser storage is full or unavailable. Export your workout CSV before making more changes.');}
@@ -175,7 +175,7 @@ $('#account-form').addEventListener('submit',async e=>{e.preventDefault();const 
 initIntelligence({getWorkouts:()=>workouts,refreshRemote,toast,getUsingSample:()=>usingSample,addLocalActivity,updateLocalActivity});
 initTour(nav);
 initPerformance({getWorkouts:()=>workouts});
-initAthleteStudio({getWorkouts:()=>workouts,getUsingSample:()=>usingSample});
+initAthleteStudio({getWorkouts:()=>workouts,getUsingSample:()=>usingSample,updateLocalActivity,refreshRemote,toast});
 $('#demo-tour').addEventListener('click',()=>$('#tour-open').click());
 load();render();
 if(hasSavedSession())restoreSession().then(async user=>{if(user){try{await refreshRemote();toast('Account session restored.');}catch(err){logout();load();render();toast('Could not restore account data: '+err.message);}}}).catch(console.error);

@@ -37,7 +37,7 @@ app.include_router(training_export_router)
 
 
 def workout_response(workout: Workout) -> WorkoutResponse:
-    return WorkoutResponse(id=workout.id, date=workout.date, type=workout.type, distanceMiles=workout.distance_miles, durationSeconds=workout.duration_seconds, notes=workout.notes, source=workout.source, startTime=workout.start_time, avgHeartRate=workout.avg_heart_rate, elevationGainMeters=workout.elevation_gain_meters, elevationLossMeters=workout.elevation_loss_meters, elapsedSeconds=workout.elapsed_seconds, maxHeartRate=workout.max_heart_rate, avgCadenceSpm=workout.avg_cadence_spm, avgPowerWatts=workout.avg_power_watts)
+    return WorkoutResponse(id=workout.id, date=workout.date, type=workout.type, distanceMiles=workout.distance_miles, durationSeconds=workout.duration_seconds, notes=workout.notes, raceResult=workout.race_result, source=workout.source, startTime=workout.start_time, avgHeartRate=workout.avg_heart_rate, elevationGainMeters=workout.elevation_gain_meters, elevationLossMeters=workout.elevation_loss_meters, elapsedSeconds=workout.elapsed_seconds, maxHeartRate=workout.max_heart_rate, avgCadenceSpm=workout.avg_cadence_spm, avgPowerWatts=workout.avg_power_watts)
 
 
 @app.get("/api/health")
@@ -108,7 +108,7 @@ def list_workouts(
 
 @app.post("/api/workouts", response_model=WorkoutResponse, status_code=status.HTTP_201_CREATED)
 def create_workout(payload: WorkoutPayload, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    workout = Workout(user_id=user.id, date=payload.date, type=payload.type, distance_miles=payload.distanceMiles, duration_seconds=payload.durationSeconds, notes=payload.notes)
+    workout = Workout(user_id=user.id, date=payload.date, type=payload.type, distance_miles=payload.distanceMiles, duration_seconds=payload.durationSeconds, notes=payload.notes, race_result=payload.raceResult.model_dump() if payload.raceResult else None)
     db.add(workout)
     db.commit()
     db.refresh(workout)
@@ -130,6 +130,8 @@ def update_workout(workout_id: str, payload: WorkoutPayload, user: User = Depend
     workout.distance_miles = payload.distanceMiles
     workout.duration_seconds = payload.durationSeconds
     workout.notes = payload.notes
+    if "raceResult" in payload.model_fields_set:
+        workout.race_result = payload.raceResult.model_dump() if payload.raceResult else None
     db.commit()
     db.refresh(workout)
     return workout_response(workout)

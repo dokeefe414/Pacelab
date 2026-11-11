@@ -84,8 +84,8 @@ export async function fetchWorkouts() {
   return result;
 }
 export function createRemoteWorkout(workout) {
-  const {date,type,distanceMiles,durationSeconds,notes} = workout;
-  return request('/workouts', {method:'POST',body:JSON.stringify({date,type,distanceMiles,durationSeconds,notes})});
+  const {date,type,distanceMiles,durationSeconds,notes,raceResult} = workout;
+  return request('/workouts', {method:'POST',body:JSON.stringify({date,type,distanceMiles,durationSeconds,notes,raceResult})});
 }
 export function deleteRemoteWorkout(id) {
   return request('/workouts/' + encodeURIComponent(id), {method:'DELETE'});
@@ -120,9 +120,9 @@ export async function uploadActivity(file) {
 }
 
 export function updateRemoteWorkout(id, workout) {
-  const {date,type,distanceMiles,durationSeconds,notes} = workout;
+  const {date,type,distanceMiles,durationSeconds,notes,raceResult} = workout;
   return request('/workouts/' + encodeURIComponent(id),{
-    method:'PUT',body:JSON.stringify({date,type,distanceMiles,durationSeconds,notes}),
+    method:'PUT',body:JSON.stringify({date,type,distanceMiles,durationSeconds,notes,raceResult}),
   });
 }
 

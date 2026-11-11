@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFile} from 'node:fs/promises';
-const fixture=JSON.parse(await readFile(new URL('../fixtures/race-study-synthetic.json',import.meta.url)));
+const fixture=JSON.parse(await readFile(new URL('../fixtures/race-study-synthetic.json',import.meta.url))).map(w=>w.type==='Race'?{...w,raceResult:{name:'Synthetic test meet',eventMeters:Math.round(w.distanceMiles*1609.344),finishSeconds:w.durationSeconds,confirmed:true,sourceUrl:''}}:w);
 async function open(page,workouts){
   await page.addInitScript(data=>{
     localStorage.setItem('pacelab.tour.v1','1');
@@ -34,7 +34,7 @@ test('private workspace evaluation supports filters, evidence, paired metrics an
   const json=await jsonDownload;const result=JSON.parse(await readFile(await json.path(),'utf8'));
   expect(result.rows).toHaveLength(20); // Full snapshot despite filtered display.
   expect(result.metrics.rolling.n).toBeGreaterThan(0);
-  expect(result.protocol.version).toBe('real-races-v1');
+  expect(result.protocol.version).toBe('real-races-v2');
   expect(JSON.stringify(result)).not.toContain('synthetic-race-');
   const mdDownload=page.waitForEvent('download');await page.locator('#research-markdown').click();
   const md=await mdDownload;expect(await readFile(await md.path(),'utf8')).toContain('Event-specific comparisons');
@@ -49,4 +49,26 @@ test('research controls and disclosures work on a narrow mobile viewport',async(
   await page.getByText('Inspect data quality and exclusions',{exact:true}).click();
   await expect(page.locator('#research-audit')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+test('verification preserves device measurements and saved predictions survive reload',async({page})=>{
+ await open(page,[{id:'race',date:'2025-01-01',type:'Easy',distanceMiles:5.01,durationSeconds:1700}]);
+ await page.getByText('Verify official race results',{exact:true}).click();
+ await page.locator('#verify-workout').selectOption('race');
+ await page.locator('#official-name').fill('Test official meet');
+ await page.locator('#official-time').fill('28:33.6');
+ await page.locator('#official-confirmed').check();
+ await page.locator('#save-official').click();
+ await expect(page.locator('#research-summary')).toContainText('1 usable labeled races');
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pacelab.workouts.v1'))[0]);
+ expect(saved.durationSeconds).toBe(1700);expect(saved.raceResult.finishSeconds).toBe(1713.6);
+ await page.getByText('Save a prediction before your next race',{exact:true}).click();
+ await page.locator('#forecast-name').fill('Future test meet');
+ await page.locator('#forecast-date').fill('2099-01-01');await page.locator('#forecast-distance').selectOption('8000');
+ await page.locator('#save-forecast').click();await expect(page.locator('#forecast-history')).toContainText('Future test meet');
+ await page.locator('#save-forecast').click();await expect(page.locator('#forecast-message')).toContainText('already saved');
+ await page.reload();await page.locator('[data-view="insights"]').click();
+ await page.getByText('Save a prediction before your next race',{exact:true}).click();
+ await expect(page.locator('#forecast-history details')).toHaveCount(1);
+ await page.locator('#forecast-history summary').click();await expect(page.locator('#forecast-history')).toContainText('28:33.6');
 });

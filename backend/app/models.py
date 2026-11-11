@@ -37,6 +37,7 @@ class Workout(Base):
     type: Mapped[str] = mapped_column(String(20), nullable=False, default="Easy")
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    race_result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -1,3 +1,4 @@
+import {initRaceVerification,renderRaceVerification} from './race-verification-view.js';
 import {evaluateRaces,reportMarkdown,METHODS} from './race-evaluation.js';
 import {formatTime} from './core.js';
 const $=s=>document.querySelector(s);
@@ -10,6 +11,7 @@ function download(name,data,type){
 }
 export function initRaceResearch(ctx){
   context=ctx;
+  initRaceVerification(ctx);
   $('#research-method').innerHTML=Object.entries(METHODS).map(([key,label])=>'<option value="'+key+'">'+label+'</option>').join('');
   $('#research-method').value='riegel';
   for(const id of ['research-method','research-event'])$('#'+id).addEventListener('change',renderResults);
@@ -18,6 +20,7 @@ export function initRaceResearch(ctx){
 }
 export function renderRaceResearch(){
   if(!context)return;
+  renderRaceVerification();
   report=evaluateRaces(context.getWorkouts(),{source:context.getUsingSample()?'synthetic':'real'});
   $('#research-source').textContent=report.source==='synthetic'?'SYNTHETIC DEMO · NO ATHLETE EVIDENCE':'YOUR RECORDS · RETROSPECTIVE RESEARCH';
   $('#research-summary').textContent=report.audit.total+' records audited · '+report.audit.excluded+
