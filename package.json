@@ -14,7 +14,7 @@
     "research:evaluate": "node scripts/evaluate-races.mjs"
   },
   "devDependencies": {
-    "vite": "^6.3.0",
+    "vite": "^8.3.6",
     "@playwright/test": "^1.56.1"
   }
 }
