@@ -1,6 +1,7 @@
+import {validateRaceResult} from './race-result.js';
 /** Private, deterministic one-athlete retrospective evaluation. No network or storage. */
 import {RACE_EVENT_DISTANCES} from './local-research.js';
-export const PROTOCOL = Object.freeze({version:'real-races-v1',exponent:1.06,
+export const PROTOCOL = Object.freeze({version:'real-races-v2',exponent:1.06,
   lookbackDays:28,minimumSessions:5,minimumRaceDates:12,rollingDates:12,ridgeAlpha:10});
 export const METHODS = Object.freeze({previous_event:'Previous same-distance race',
   riegel:'Latest race · Riegel',frozen:'Frozen ridge',expanding:'Expanding ridge',rolling:'Rolling 12-date ridge'});
@@ -17,25 +18,29 @@ const TYPES=['Easy','Recovery','Long','Tempo','Intervals','Race'];
 const eventFor=w=>RACE_EVENT_DISTANCES.find(d=>Math.abs(w.distanceMiles*1609.344-d)/d<=.025)??null;
 const ref=r=>({date:r.date,eventMeters:r.eventMeters,seconds:r.durationSeconds});
 
-export function auditWorkouts(workouts,asOf=localDay()){
+export function auditWorkouts(workouts,asOf=localDay(),{requireConfirmed=false}={}){
   if(!Array.isArray(workouts)||!validDay(asOf))throw Error('Expected a workout array and valid YYYY-MM-DD cutoff.');
   const records=workouts.map((raw,index)=>{
     const w=raw&&typeof raw==='object'?raw:{};
     const reasons=[];const warnings=[];
+    let official=null;
+    try{official=validateRaceResult(w.raceResult);}catch{reasons.push('Invalid official result');}
+    const verified=w.type==='Race'&&official?.confirmed;
+    if(w.type==='Race'&&requireConfirmed&&!verified)reasons.push('Official result not confirmed');
     if(!validDay(w.date))reasons.push('Invalid calendar date');
     else if(w.date>asOf)reasons.push('After evaluation cutoff');
     if(!finite(w.distanceMiles)||w.distanceMiles<=0||w.distanceMiles>200)reasons.push('Invalid distance');
     if(!finite(w.durationSeconds)||w.durationSeconds<=0||w.durationSeconds>86400)reasons.push('Invalid duration');
     if(!TYPES.includes(w.type))warnings.push('Workout type needs review');
     if(!finite(w.avgHeartRate)||w.avgHeartRate<30||w.avgHeartRate>230)warnings.push('No usable average heart rate');
-    if(w.type==='Race'&&!eventFor(w))reasons.push('Race distance outside supported event tolerance');
-    if(w.type==='Race')warnings.push('Verify official distance and finish time; watch distance is matched within 2.5%');
-    if(w.type==='Race'&&finite(w.elapsedSeconds)&&Math.abs(w.elapsedSeconds-w.durationSeconds)>5)
+    if(w.type==='Race'&&!verified&&!eventFor(w))reasons.push('Race distance outside supported event tolerance');
+    if(w.type==='Race'&&!verified)warnings.push('Verify official distance and finish time; watch distance is matched within 2.5%');
+    if(w.type==='Race'&&!verified&&finite(w.elapsedSeconds)&&Math.abs(w.elapsedSeconds-w.durationSeconds)>5)
       reasons.push('Race timer and elapsed time disagree; verify official result');
     // Only this allowlist leaves the audit: never notes, GPS, IDs, or source hashes.
     return {row:index+1,date:validDay(w.date)?w.date:null,type:TYPES.includes(w.type)?w.type:'Unreviewed',
-      distanceMiles:finite(w.distanceMiles)?w.distanceMiles:null,durationSeconds:finite(w.durationSeconds)?w.durationSeconds:null,
-      eventMeters:w.type==='Race'?eventFor(w):null,reasons,warnings};
+      distanceMiles:finite(w.distanceMiles)?w.distanceMiles:null,durationSeconds:verified?official.finishSeconds:(finite(w.durationSeconds)?w.durationSeconds:null),
+      eventMeters:w.type==='Race'?(verified?official.eventMeters:eventFor(w)):null,reasons,warnings};
   });
   const groups=new Map();
   // Exact IDs / file hashes and near-identical same-day summaries are suspect.
@@ -119,7 +124,7 @@ function summaries(rows){
 }
 export function evaluateRaces(workouts,{asOf=localDay(),source='real'}={}){
   if(!['real','synthetic'].includes(source))throw Error('Source must be real or synthetic.');
-  const audit=auditWorkouts(workouts,asOf);
+  const audit=auditWorkouts(workouts,asOf,{requireConfirmed:source==='real'});
   const races=audit.usable.filter(w=>w.type==='Race').map(r=>({...r,training:features(r,audit.usable)}));
   const rows=[];
   for(const race of races){
@@ -153,7 +158,7 @@ export function evaluateRaces(workouts,{asOf=localDay(),source='real'}={}){
   const {usable,...publicAudit}=audit;
   return {protocol:PROTOCOL,source,asOf,audit:publicAudit,rows,metrics:summaries(rows),byEvent,
     status:rows.some(r=>finite(r.predictions.riegel.seconds))?'exploratory':'insufficient-history',
-    limitations:[source==='synthetic'?'Synthetic demonstration only; not real-athlete evidence.':'Real-input retrospective analysis; race labels and official results require human verification.',
+    limitations:[source==='synthetic'?'Synthetic demonstration only; not real-athlete evidence.':'Retrospective analysis using user-confirmed official results; confirmation is not independent certification.',
       'No prospective validation, causal training-effect claim, confidence interval, or automatic model selection.',
       'Terrain, weather, effort, illness and incomplete logging are not adjusted for. Riegel exponent is fixed at 1.06.',
       'Missing sensor values are not imputed. Heart rate is not a model feature.',

@@ -1,3 +1,4 @@
+import {validateRaceResult} from './race-result.js';
 export const KEY = 'pacelab.workouts.v1';
 export const MILE_TO_KM = 1.609344;
 export function parseTime(input) {
@@ -32,6 +33,7 @@ export function validateWorkout(input) {
   const type=types.includes(input.type)?input.type:'Easy';
   const workout={id:String(input.id||crypto.randomUUID()),date,type,distanceMiles,durationSeconds,
     notes:String(input.notes||'').slice(0,300)};
+  if(input.raceResult!=null)workout.raceResult=validateRaceResult(input.raceResult);
   if(!['fit','gpx','tcx'].includes(input.source))return workout;
   workout.source=input.source;
   if(typeof input.startTime==='string'&&Number.isFinite(Date.parse(input.startTime)))

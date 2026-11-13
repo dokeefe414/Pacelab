@@ -42,6 +42,31 @@
   </div>
 <article class="panel research-panel" id="race-research" aria-label="Race forecast evaluation">
   <div class="panel-title"><div><div class="eyebrow" id="research-source"></div><h2>Race evidence lab</h2></div></div>
+  <details class="research-race"><summary>Verify official race results</summary>
+    <p>Choose the race activity, not its warmup or cooldown. Confirm the official course distance and finish time. Drafts and unconfirmed Race labels are excluded from real-data research.</p>
+    <label>Load reviewed results packet <input type="file" id="official-import" accept=".json,application/json"></label>
+    <label>Reviewed result <select id="official-suggestions"><option value="">No packet loaded</option></select></label>
+    <form id="verify-form" class="race-entry-form">
+      <label>Activity <select id="verify-workout" required></select></label><p id="official-watch"></p>
+      <label>Race name <input id="official-name" maxlength="160" required></label>
+      <label>Official distance <select id="official-distance"></select></label>
+      <label>Official finish time <input id="official-time" placeholder="28:33.6" required></label>
+      <label>Results URL (optional) <input id="official-url" type="url" maxlength="2000"></label>
+      <label><input type="checkbox" id="official-confirmed"> I checked this athlete, race date, distance and finish time against the official result.</label>
+      <button id="save-official" type="submit">Save official result</button>
+    </form><p id="verification-message" role="status"></p>
+  </details>
+  <details class="research-race"><summary>Save a prediction before your next race</summary>
+    <p>Uses confirmed results available today. Previous-race and Riegel baselines only; future training is unknown. One snapshot per date and distance. Saved values cannot be edited here.</p>
+    <p>History stays in this browser, separately for each account. Export it before clearing browser data. Browser timestamps are not proof of when a prediction was made. Outcomes use the current confirmed result; corrections update scoring, never the original forecast.</p>
+    <form id="forecast-form" class="race-entry-form">
+      <label>Upcoming race name <input id="forecast-name" maxlength="160" required></label>
+      <label>Future race date <input id="forecast-date" type="date" required></label>
+      <label>Race distance <select id="forecast-distance"></select></label>
+      <button id="save-forecast" type="submit">Save prediction snapshot</button>
+    </form><p id="forecast-message" role="status"></p><div id="forecast-history"></div>
+    <button class="secondary" id="forecast-export">Export private prediction history</button>
+  </details>
   <p class="body-copy" id="research-summary" aria-live="polite"></p>
   <p class="body-copy">A replay of your race history, not a validated forecast for your next race. Check official distances, finish times and Race labels before interpreting results.</p>
   <div class="research-controls"><label for="research-event">Distance <select id="research-event"><option value="all">All distances</option></select></label>

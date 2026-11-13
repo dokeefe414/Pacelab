@@ -26,7 +26,7 @@ def serialize_activity(workout: Workout):
         "id": workout.id,
         "date": workout.date.isoformat(), "type": workout.type,
         "distanceMiles": workout.distance_miles, "durationSeconds": workout.duration_seconds,
-        "notes": workout.notes,
+        "notes": workout.notes, "raceResult": workout.race_result,
         "startTime": workout.start_time.isoformat() if workout.start_time else None,
         "source": workout.source, "avgHeartRate": workout.avg_heart_rate,
         "elevationGainMeters": workout.elevation_gain_meters,

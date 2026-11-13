@@ -39,7 +39,33 @@ class AuthResponse(BaseModel):
     user: PublicUser
 
 
+class RaceResult(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    eventMeters: Literal[800, 1609.344, 3000, 5000, 8000, 10000]
+    finishSeconds: float = Field(gt=0, le=86400, allow_inf_nan=False)
+    confirmed: bool = Field(strict=True)
+    sourceUrl: str = Field(default="", max_length=2000)
+
+    @field_validator("name")
+    @classmethod
+    def nonblank_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Race name cannot be blank")
+        return value.strip()
+
+    @field_validator("sourceUrl")
+    @classmethod
+    def safe_url(cls, value: str) -> str:
+        from urllib.parse import urlsplit
+        if value:
+            url = urlsplit(value)
+            if url.scheme not in ("https", "http") or not url.hostname or url.username or url.password:
+                raise ValueError("Use an HTTP(S) results URL without credentials")
+        return value
+
+
 class WorkoutPayload(BaseModel):
+    raceResult: RaceResult | None = None
     date: date
     type: WorkoutType = "Easy"
     distanceMiles: float = Field(gt=0, le=200, allow_inf_nan=False)

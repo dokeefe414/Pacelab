@@ -3,7 +3,8 @@
 PaceLab can now audit one athlete's records and replay forecasts chronologically.
 Open **Insights → Athlete Studio → Race evidence lab**. This works with local
 workouts and the signed-in account's already-loaded records. It does not require
-a hosted model, a new server endpoint or a database migration.
+a hosted model. Account hosts must run `alembic upgrade head` before serving
+this version (migration 0005 adds nullable official results).
 
 This is retrospective exploratory research. The panel does not select a winner,
 change the production predictor or claim that a small race history validates ML.
@@ -14,13 +15,18 @@ The existing 60-row training-artifact readiness gate is unchanged. The lab's
 
 1. Import your FIT/GPX/TCX files using the existing import controls, or restore
    your private PaceLab JSON backup. Account mode uses your own account records.
-2. In Workout details, label genuine completed races **Race**. Imports default
-   to a training type; neither fast pace nor an 8 km watch distance proves a race.
-3. Verify race date, official distance and finish time. The current schema uses
-   workout distance/duration as labels, not a separate official-results record.
-   If the imported timer is not the official finish, retain a private backup and
-   correct the underlying record via the existing workout API or a reviewed
-   backup. Do not create a second copy and leave both in the evaluation.
+2. Open **Verify official race results** and select the actual race activity,
+   not its warmup or cooldown. Enter race name, official distance, finish time
+   (fractional seconds supported), and optional HTTP(S) results URL.
+3. Check confirmation after reviewing athlete identity and race date. Saving
+   labels that activity Race and stores `raceResult` separately; device distance,
+   duration and telemetry stay unchanged. Unconfirmed drafts and old Race labels
+   are excluded from real-data evaluation. Uncheck confirmation to withdraw a result.
+   Local JSON backups and account exports preserve metadata; CSV does not.
+   Optional `pacelab-official-results-v1` packets contain `results` entries with
+   `date` and `raceResult`. Loading only suggests same-day activities within 2.5%
+   distance and 10 seconds; it never labels or overwrites automatically. Review
+   ambiguous/missing matches manually and confirm each result before saving.
 4. Inspect **data quality and exclusions**. Resolve possible duplicates before
    interpreting errors. No audit action edits or deletes the original workouts.
 5. Filter to one event and compare methods on the **same scored races**. Expand a
@@ -28,8 +34,8 @@ The existing 60-row training-artifact readiness gate is unchanged. The lab's
    sessions and feature values. Export JSON and Markdown for a private review.
 
 Supported events are 800 m, mile (1609.344 m), 3000 m, 5000 m, 8000 m and 10000 m.
-A labeled race's watch distance is matched within 2.5%; this does not certify
-course length. In particular, 1600 m and one mile should not be conflated when
+Confirmed races use official event distance. Watch tolerance is only a matching
+aid and fallback for synthetic fixtures. In particular, 1600 m and one mile should not be conflated when
 entering official results. Terrain, wind, temperature, effort and illness are
 not adjusted for. Check these limitations before interpreting small errors.
 
@@ -37,8 +43,10 @@ not adjusted for. Check these limitations before interpreting small errors.
 
 - Invalid calendar dates, post-cutoff records, nonpositive/nonfinite durations
   or distances, durations over 24 hours and distances over 200 miles are excluded.
-- Races outside the event tolerance and races with timer/elapsed disagreements
-  over five seconds are excluded for review.
+- Real races require valid confirmed official metadata. Official distance/time
+  override watch labels for evaluation only. Synthetic races without metadata
+  retain the 2.5% tolerance and reject timer/elapsed differences over five seconds.
+  Invalid official metadata is excluded in either mode.
 - Repeated IDs or source hashes on the same day, and same-day summaries within
   0.015 mi and five seconds, are possible duplicates. Both are excluded. This
   conservative rule can exclude genuine identical doubles; review the originals.
@@ -53,7 +61,7 @@ whether the labeling is correct. It cannot establish training-history completene
 This is a replay of today's records, not proof that these forecasts were actually
 issued before the races. Future corrections to historical records can change a replay.
 
-## Fixed protocol `real-races-v1`
+## Fixed protocol `real-races-v2`
 
 For target race date `t`, all reference races have dates **strictly less than t**.
 No race or workout on `t` contributes to its forecast. Multiple same-day races
@@ -106,6 +114,25 @@ whether either improves over simple baselines. Different event mixes can distort
 pooled errors; use the event filter. Repeated races from one runner are correlated.
 No confidence intervals or significance claims are reported. A few improvements
 are not evidence of generalization to new athletes or future seasons.
+
+## Save future predictions
+
+Use **Save a prediction before your next race** after confirming a past race.
+Enter a name, future date and supported distance. The snapshot stores creation
+ time, protocol, reference history and previous-event/Riegel predictions. It
+excludes post-cutoff records and invents no future training; ridge is available
+only retrospectively. One snapshot per date/distance prevents replacing forecasts
+in the UI. Browser storage is editable: these are client-clock records, not
+independently timestamped evidence. No in-app editing or deletion is provided.
+
+History compares saved values with exactly one currently confirmed race on the
+same date and distance. Ambiguous matches are not scored. Corrections update the
+displayed error, never the original forecast. History stays in this browser,
+scoped to local mode or API base plus account ID; demo mode hides it. Export
+private prediction history before clearing site data. That archive supports
+external analysis but is not currently restorable in the app, and is separate
+from workout backups/account exports. Existing dashboard predictors/training CSV
+remain separate legacy tools; this protocol applies to the Race evidence lab.
 
 ## Reproduce a report offline
 
